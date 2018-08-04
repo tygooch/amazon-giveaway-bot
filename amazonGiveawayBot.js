@@ -45,12 +45,17 @@
         console.log("YOUTUBE");
         document.querySelector(".continue_button_inner").click();
         console.log("CLICKED");
-        setTimeout(() => {
-          console.log("DONE");
-          if(document.querySelector('.qa-giveaway-result-text') && !document.querySelector('.qa-giveaway-result-text').innerText.includes('won')){
-            window.location.href = GM_getValue("mainPageUrl")
-          }
-        }, 10000)
+        // while(!document.querySelector('.qa-giveaway-result-text')){
+        //   setTimeout(() => {}, 1000)
+        // }
+        // setInterval(() => {
+        //   if(document.querySelector('.qa-giveaway-result-text') && !document.querySelector('.qa-giveaway-result-text').innerText.includes('won')){
+        //     console.log("DONE");
+        //     window.location.href = GM_getValue("mainPageUrl")
+        //     return
+        //   }
+        // }, 1000)
+        handleGiveawayEntered()
       } else {
         if(document.querySelector("#ts_en_enter")){
           document.querySelector("#ts_en_enter span input").click()
@@ -59,12 +64,24 @@
           document.querySelector(".boxClickTarget").click()
         }
         console.log("ELSE");
-        setTimeout(() => {
-          if(document.querySelector('.qa-giveaway-result-text') && !document.querySelector('.qa-giveaway-result-text').innerText.includes('won')){
-            window.location.href = GM_getValue("mainPageUrl")
-          }
-        }, 5000)
+        // setTimeout(() => {
+        //   if(document.querySelector('.qa-giveaway-result-text') && !document.querySelector('.qa-giveaway-result-text').innerText.includes('won')){
+        //     window.location.href = GM_getValue("mainPageUrl")
+        //   }
+        // }, 5000)
+        handleGiveawayEntered();
       }
+    }
+
+    function handleGiveawayEntered(){
+      setInterval(() => {
+        if(document.querySelector('.qa-giveaway-result-text') && !document.querySelector('.qa-giveaway-result-text').innerText.includes('won')){
+          console.log("DONE");
+          // window.location.href = GM_getValue("mainPageUrl")
+          processGiveaways()
+          return
+        }
+      }, 1000)
     }
 
     window.addEventListener('load', function() {
@@ -93,7 +110,7 @@
             if(document.querySelector(".airy-play-toggle-hint.airy-hint.airy-play-hint")){
               document.querySelector(".airy-play-toggle-hint.airy-hint.airy-play-hint").click()
             }
-            setTimeout(processGiveaway, 35000)
+            setTimeout(processGiveaway, 31000)
           } else {
             setTimeout(processGiveaway, 3000)
           }
