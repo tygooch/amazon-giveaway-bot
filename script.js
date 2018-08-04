@@ -1,6 +1,5 @@
 // ==UserScript==
 // @name         Amazon Giveaway Bot
-// @namespace    http://tampermonkey.net/
 // @version      0.1
 // @description  Automates Amazon giveaway entries
 // @author       Ty Gooch
@@ -96,9 +95,6 @@
             }
             setTimeout(enterGiveaway, 31000)
           }
-          // else {
-          //   setTimeout(enterGiveaway, 3000)
-          // }
         }
         // if giveaway has no requirements, process it after 3 seconds
         else{
