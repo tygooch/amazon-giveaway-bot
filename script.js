@@ -1,12 +1,15 @@
+// This is a Greasemonkey script and must be run using a Greasemonkey-compatible browser.
+//
 // ==UserScript==
 // @name         Amazon Giveaway Bot
 // @version      0.1
-// @description  Automates Amazon giveaway entries
 // @author       Ty Gooch
+// @updateURL    https://github.com/TyGooch/amazon-giveaway-automator/raw/master/script.js
+// @description  Automates Amazon giveaway entries
 // @match        https://www.amazon.com/ga/*
-// @grant GM_setValue
-// @grant GM_getValue
-// @grant unsafeWindow
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @grant        unsafeWindow
 // ==/UserScript==
 
 (function() {
