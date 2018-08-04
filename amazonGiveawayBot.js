@@ -15,61 +15,88 @@
 
 
     var entries;
-    var isMainPage = window.location.href === "https://www.amazon.com/ga/giveaways"
+    var isMainPage = window.location.href.includes("https://www.amazon.com/ga/giveaways")
     var isGiveaway = window.location.href.indexOf('ga/p') !== -1;
 
     function getGiveaways() {
-      var giveaways = [];
       var giveawayItems = document.querySelectorAll(".giveawayItemContainer a");
       giveawayItems.forEach((item, idx) => {
-        giveaways.push(item.href)
         GM_setValue(`giveaway-${idx}`, JSON.stringify(item.href))
       })
+      processGiveaways()
     }
 
     async function processGiveaways() {
       GM_setValue("processingGiveaways", true)
-      if(GM_getValue("currentIdx") > 23){
-        GM_setValue("processingGiveaways", false)
-        GM_setValue("currentIdx", 0)
-      }
       let idx = GM_getValue("currentIdx");
       let currentGiveaway = JSON.parse(GM_getValue(`giveaway-${idx}`))
       GM_setValue(`giveaway-${idx}`, false)
       idx += 1
       GM_setValue("currentIdx", idx)
-      window.location.href = currentGiveaway;
+      if(idx <= 23){
+        window.location.href = currentGiveaway;
+      } else {
+        window.location.href = GM_getValue("mainPageUrl")
+      }
     }
 
     async function processGiveaway(){
-      if(document.getElementById("giveaway-youtube-video-watch-text")){
+      if((document.getElementById("giveaway-video-watch-text") || (document.getElementById("giveaway-youtube-video-watch-text") && document.querySelector(".continue_button_inner")))){
         console.log("YOUTUBE");
         document.querySelector(".continue_button_inner").click();
-      } else {
-        document.querySelector(".boxClickTarget").click();
+        console.log("CLICKED");
         setTimeout(() => {
-          if(document.querySelector('.qa-giveaway-result-text') && document.querySelector('.qa-giveaway-result-text').innerText.includes('you didn\'t win')){
-            window.location.href = "https://www.amazon.com/ga/giveaways"
+          console.log("DONE");
+          if(document.querySelector('.qa-giveaway-result-text') && !document.querySelector('.qa-giveaway-result-text').innerText.includes('won')){
+            window.location.href = GM_getValue("mainPageUrl")
+          }
+        }, 10000)
+      } else {
+        if(document.querySelector("#ts_en_enter")){
+          document.querySelector("#ts_en_enter span input").click()
+        }
+        if(document.querySelector(".boxClickTarget")){
+          document.querySelector(".boxClickTarget").click()
+        }
+        console.log("ELSE");
+        setTimeout(() => {
+          if(document.querySelector('.qa-giveaway-result-text') && !document.querySelector('.qa-giveaway-result-text').innerText.includes('won')){
+            window.location.href = GM_getValue("mainPageUrl")
           }
         }, 5000)
       }
     }
 
     window.addEventListener('load', function() {
+      console.log(GM_getValue("currentIdx"));
       if(isMainPage){
-        if(!GM_getValue("processingGiveaways")){
+        GM_setValue("mainPageUrl", window.location.href)
+        if(GM_getValue("currentIdx") > 23){
+          GM_setValue("processingGiveaways", false)
+          GM_setValue("currentIdx", 0)
+          document.querySelector(".a-last a").click()
+        } else if(!GM_getValue("processingGiveaways")){
           getGiveaways();
+        } else {
+          processGiveaways();
         }
-        console.log(JSON.parse(GM_getValue("giveaway-1")));
-        processGiveaways();
       }
 
       if(isGiveaway){
         if(document.querySelector("#giveaway-ended-header") || (document.querySelector('.qa-giveaway-result-text') && !document.querySelector('.qa-giveaway-result-text').innerText.includes('won'))){
-          window.location.href = "https://www.amazon.com/ga/giveaways"
-        } else if (document.getElementById("giveaway-youtube-video-watch-text")){
+          // window.location.href = "https://www.amazon.com/ga/giveaways"
+          // window.location.href = GM_getValue("mainPageUrl")
+          processGiveaways()
+        } else if (document.getElementById("giveaway-youtube-video-watch-text") || document.getElementById("giveaway-video-watch-text")){
           console.log("YT START");
-          setTimeout(processGiveaway, 35000)
+          if(document.querySelector(".continue_button_inner")){
+            if(document.querySelector(".airy-play-toggle-hint.airy-hint.airy-play-hint")){
+              document.querySelector(".airy-play-toggle-hint.airy-hint.airy-play-hint").click()
+            }
+            setTimeout(processGiveaway, 35000)
+          } else {
+            setTimeout(processGiveaway, 3000)
+          }
         } else{
           setTimeout(processGiveaway, 3000)
         }
