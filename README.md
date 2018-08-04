@@ -16,6 +16,6 @@ If you use the [Google Chrome](https://chrome.google.com/) web browser, ensure y
 
 ## Installing
 
-To install Amazon Giveaway Automator, click [here](https://github.com/TyGooch/amazon-giveaway-automator/blob/master/script.js).
+To install Amazon Giveaway Automator, click [here](https://github.com/TyGooch/amazon-giveaway-automator/raw/master/script.js).
 
 ## Usage
