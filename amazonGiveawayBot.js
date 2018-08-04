@@ -13,8 +13,6 @@
 (function() {
     'use strict';
 
-
-    var entries;
     var isMainPage = window.location.href.includes("https://www.amazon.com/ga/giveaways")
     var isGiveaway = window.location.href.indexOf('ga/p') !== -1;
 
@@ -40,50 +38,36 @@
       }
     }
 
-    async function processGiveaway(){
+    async function enterGiveaway(){
+      // if giveaway has video requirement, click the continiue entry button first
       if((document.getElementById("giveaway-video-watch-text") || (document.getElementById("giveaway-youtube-video-watch-text") && document.querySelector(".continue_button_inner")))){
-        console.log("YOUTUBE");
         document.querySelector(".continue_button_inner").click();
-        console.log("CLICKED");
-        // while(!document.querySelector('.qa-giveaway-result-text')){
-        //   setTimeout(() => {}, 1000)
-        // }
-        // setInterval(() => {
-        //   if(document.querySelector('.qa-giveaway-result-text') && !document.querySelector('.qa-giveaway-result-text').innerText.includes('won')){
-        //     console.log("DONE");
-        //     window.location.href = GM_getValue("mainPageUrl")
-        //     return
-        //   }
-        // }, 1000)
         handleGiveawayEntered()
-      } else {
+      }
+      // otherwise, enter giveaway immediately
+      else {
         if(document.querySelector("#ts_en_enter")){
           document.querySelector("#ts_en_enter span input").click()
         }
         if(document.querySelector(".boxClickTarget")){
           document.querySelector(".boxClickTarget").click()
         }
-        console.log("ELSE");
-        // setTimeout(() => {
-        //   if(document.querySelector('.qa-giveaway-result-text') && !document.querySelector('.qa-giveaway-result-text').innerText.includes('won')){
-        //     window.location.href = GM_getValue("mainPageUrl")
-        //   }
-        // }, 5000)
         handleGiveawayEntered();
       }
     }
 
+    // check page until results show up then continue to next giveaway in queue if not a winner
     function handleGiveawayEntered(){
       setInterval(() => {
         if(document.querySelector('.qa-giveaway-result-text') && !document.querySelector('.qa-giveaway-result-text').innerText.includes('won')){
           console.log("DONE");
-          // window.location.href = GM_getValue("mainPageUrl")
           processGiveaways()
           return
         }
       }, 1000)
     }
 
+    // run script on page load
     window.addEventListener('load', function() {
       console.log(GM_getValue("currentIdx"));
       if(isMainPage){
@@ -100,22 +84,25 @@
       }
 
       if(isGiveaway){
+        // if giveaway has already been entered, continue on to next giveaway in queue
         if(document.querySelector("#giveaway-ended-header") || (document.querySelector('.qa-giveaway-result-text') && !document.querySelector('.qa-giveaway-result-text').innerText.includes('won'))){
-          // window.location.href = "https://www.amazon.com/ga/giveaways"
-          // window.location.href = GM_getValue("mainPageUrl")
           processGiveaways()
-        } else if (document.getElementById("giveaway-youtube-video-watch-text") || document.getElementById("giveaway-video-watch-text")){
-          console.log("YT START");
+        }
+        // handle giveaways with video requirement
+        else if (document.getElementById("giveaway-youtube-video-watch-text") || document.getElementById("giveaway-video-watch-text")){
           if(document.querySelector(".continue_button_inner")){
             if(document.querySelector(".airy-play-toggle-hint.airy-hint.airy-play-hint")){
               document.querySelector(".airy-play-toggle-hint.airy-hint.airy-play-hint").click()
             }
-            setTimeout(processGiveaway, 31000)
-          } else {
-            setTimeout(processGiveaway, 3000)
+            setTimeout(enterGiveaway, 31000)
           }
-        } else{
-          setTimeout(processGiveaway, 3000)
+          // else {
+          //   setTimeout(enterGiveaway, 3000)
+          // }
+        }
+        // if giveaway has no requirements, process it after 3 seconds
+        else{
+          setTimeout(enterGiveaway, 3000)
         }
       }
     }, false);
