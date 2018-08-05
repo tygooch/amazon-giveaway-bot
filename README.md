@@ -19,3 +19,5 @@ If you use the [Google Chrome](https://chrome.google.com/) web browser, ensure y
 To install Amazon Giveaway Automator, click [here](https://github.com/TyGooch/amazon-giveaway-automator/raw/master/amazon-giveaway-automator.user.js).
 
 ## Usage
+
+Once installed, ensure Tampermonkey is enabled and navigate to [Amazon Giveaways](https://www.amazon.com/ga/giveaways). A control panel will show up under the search bar. Click "Start Automator" and a new window will open and begin automating your giveaway entries.
