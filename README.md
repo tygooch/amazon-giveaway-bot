@@ -12,7 +12,7 @@ Make sure to use the [Google Chrome](https://chrome.google.com/) web browser and
 
 ## Installation
 
-To install Amazon Giveaway Automator, click [here](https://github.com/TyGooch/amazon-giveaway-automator/raw/master/amazon-giveaway-automator.user.js). If Tampermonkey is correctly installed, you will be asked to add the script to your dashboard. Confirm the installation and start winning some giveaways.
+To install Amazon Giveaway Automator, click [here](https://github.com/TyGooch/amazon-giveaway-automator/raw/master/amazonGiveawayAutomator.user.js). If Tampermonkey is correctly installed, you will be asked to add the script to your dashboard. Confirm the installation and start winning some giveaways.
 
 ## Usage
 
