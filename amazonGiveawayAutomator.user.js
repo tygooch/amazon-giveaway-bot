@@ -4,7 +4,7 @@
 // @name         Amazon Giveaway Bot
 // @version      1.0
 // @author       Ty Gooch
-// @updateURL    https://github.com/TyGooch/amazon-giveaway-automator/raw/master/script.js
+// @updateURL    https://github.com/TyGooch/amazon-giveaway-automator/raw/master/amazonGiveawayAutomator.user.js
 // @description  Automates Amazon giveaway entries
 // @match        https://www.amazon.com/ga/*
 // @match        https://www.amazon.com/ap/signin*
@@ -175,18 +175,22 @@
 
     // check page until results show up then continue to next giveaway in queue if not a winner
     function handleSubmit(){
+      let emailed = false
       setInterval(() => {
         if(document.getElementById('title')){
           if(document.getElementById('title').innerHTML.includes('won')){
             // setInterval( () => GM_notification("You just won an Amazon giveaway!", "Amazon Giveway Automator"), 5000)
-            GM_xmlhttpRequest({
-              method: "POST",
-              url: "http://email-sender-213012.appspot.com/hello",
-              data: `email=${GM_getValue("userEmail")}&href=${window.location.href}`,
-              headers: {
-                "Content-Type": "application/x-www-form-urlencoded"
-              },
-            });
+            if(!emailed){
+              emailed = true
+              GM_xmlhttpRequest({
+                method: "POST",
+                url: "http://email-sender-213012.appspot.com/hello",
+                data: `email=${GM_getValue("userEmail")}&href=${window.location.href}`,
+                headers: {
+                  "Content-Type": "application/x-www-form-urlencoded"
+                },
+              });
+            }
             document.getElementById('lu_co_ship_box-announce').click()
             processGiveaways()
             return
@@ -252,4 +256,3 @@
     }
 
 })();
-
