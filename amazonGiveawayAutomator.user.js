@@ -13,31 +13,19 @@
 // @grant        GM_getValue
 // @grant        unsafeWindow
 // @run-at        document-start
-// @require      https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js
 // ==/UserScript==
 
 
 (function() {
-  // var document.querySelector = window.document.querySelector
-  
-  // console.log(window)
-  // var document.querySelector
-  
+
   var isSignIn = window.location.href.includes("https://www.amazon.com/ap/signin") || document.querySelector('.cvf-account-switcher')
   var isMainPage = window.location.href.includes('?pageId=')
   var isGiveaway = window.location.href.includes('/ga/p')
   
-  // GM_getValue('running', false)
-  
   unsafeWindow.addEventListener(
     "load",
     () => {
-      var $ = unsafeWindow.$;
-      if(GM_getValue('running')) {
-        main()
-      } else {
-        init()
-      }
+      main()
     },
     false
   )
@@ -59,23 +47,23 @@
       '    <button id="closeControls" style="margin-top: 8px; margin-right: 10px; border: 0; padding: 0; position: absolute; right: 0px; top: 0px; min-height: 1em; line-height: 1em; font-size: 2rem; color: rgba(0,0,0,.5)">×</button>\n' +
       '  </div>\n' +
       '  <div id="botFrameContainer" style="margin: auto auto; max-width: 600px; max-height: 384px;"></div>\n' +
-      '  <div id="botOptions" style="display: flex; padding: 16px; border-top: 1px solid #e9ecef; border-bottom: 1px solid #e9ecef; text-align: left;">\n' +
+      '  <div id="botOptions" style="display: flex; padding: 16px; padding-bottom: 0px; border-top: 1px solid #e9ecef; text-align: left;">\n' +
       '    <div style="padding-bottom: 10px;"><label for="twoCaptchaKey">2Captcha API Key</label><input id="twoCaptchaKey" style="width: 250px;" name="twoCaptchaKey" type="text" placeholdertype="Enter your key here"></input></div>\n' +
       '	    <div style="margin-left: 50px;">\n' +
-      '	  	  <label id="">Disabled Giveaways</label>\n' +
+      '	  	  <label id="">Filter</label>\n' +
       '	  	  <div style="padding-left: 7px;">\n' +
       '       <div><input id="disableKindle" name="disableKindle" type="checkbox"></input><span> Kindle Books</span></div>\n' +
-      '	  	    <div><input id="disableVideo" name="disableVideo" type="checkbox"></input><span> Entry Requires Video</span></div>\n' +
-      ' 	    <div><input id="disableFollow" name="disableFollow" type="checkbox"></input><span> Entry Requires Follow on Amazon</span></div>\n' +
+      '	  	    <div><input id="disableVideo" name="disableVideo" type="checkbox"></input><span> Requires Video</span></div>\n' +
+      ' 	    <div><input id="disableFollow" name="disableFollow" type="checkbox"></input><span> Requires Follow on Amazon</span></div>\n' +
       '	  	  </div>\n' +
       '	  	</div>\n' +
       '  </div>\n' +
-      '  <div style="border-top: 1px solid #e9ecef; background-color: rgb(249, 250, 251); display: flex; justify-content: space-between; padding: 16px; text-align: left;">\n' +
-      '  <div style="padding-left: 10px;" id="lifetimeEntries"></div>\n' +
-      '  <div style="padding-left: 10px;" id="currentSessionEntries"></div>\n' +
-      // '		  <label id="">Statistics</label>\n' +
-      '		<button id="run" style="background-color: #2185d0; border: 0; border-radius: .28571429rem; color: #fff; padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Start Bot</button>\n' +
-      '		<button id="stop" style="background-color: #d10919; border: 0; border-radius: .28571429rem; color: #fff;  padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Stop Bot</button>\n' +
+      '  <div style="display:flex; padding: 16px; justify-content: space-between;">\n' +
+      '    <span style="display: inline-block;" id="lifetimeEntries"><b>Giveaways Entered: </b><span style="" id="lifetimeEntriesValue"></span><span id="currentSessionEntries"> (<span style="" id="currentSessionEntriesValue"></span> this session)</span></span>\n' +
+      '  </div>\n' +
+      '  <div style="border-top: 1px solid #e9ecef; background-color: rgb(249, 250, 251); display: flex; justify-content: flex-end; padding: 16px; text-align: left;">\n' +
+      '  		<button id="run" style="background-color: #2185d0; border: 0; border-radius: .28571429rem; color: #fff; padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Start Bot</button>\n' +
+      '  		<button id="stop" style="background-color: #d10919; border: 0; border-radius: .28571429rem; color: #fff;  padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Stop Bot</button>\n' +
       '  </div>\n'
       '</div>\n'
 
@@ -103,36 +91,26 @@
       if (GM_getValue("twoCaptchaKey")) {
         document.querySelector("#twoCaptchaKey").value = GM_getValue("twoCaptchaKey")
       }
-      document.querySelector("#lifetimeEntries").innerHTML = "Lifetime Entries: " + GM_getValue("lifetimeEntries")
-      document.querySelector("#currentSessionEntries").style.display = "none"
+      document.querySelector("#lifetimeEntriesValue").innerHTML = GM_getValue("lifetimeEntries")
+      document.querySelector("#currentSessionEntries").style.visibility = "hidden"
       document.querySelector("#twoCaptchaKey").style.border = "1px solid #ced4da"
+      document.body.style.overflow = "hidden"
 
-
-      var openControls = document.createElement("div")
-      openControls.id = "openControls"
-      openControls.style.width = "100vw"
-      openControls.style.position = "absolute"
-      openControls.style.top = "213px"
-      openControls.style.left = "0px"
-      openControls.style.textAlign = "center"
-      // openControls.innerHTML = `<button id="openControlsLink" class="a-button a-button-primary"><span class="a-button-inner"><span class="a-button-text">Open Giveaway Bot</span></span></button>`
-      // openControls.innerHTML = `<div id="openControlsLink"><img style="width: 200px;" src="https://i.ibb.co/8mxQ7wD/bot-copy-3x.png" /></div>`
-      openControls.innerHTML = `<div id="openControlsLink"><img style="width: 200px;" src="https://i.ibb.co/xgYpv6T/giveaway-Bot-Logo-Blue.png" /></div>`
+      var botLogoButton = document.createElement("div")
+      botLogoButton.id = "botLogoButton"
+      botLogoButton.style.width = "100vw"
+      botLogoButton.style.position = "absolute"
+      botLogoButton.style.top = "110px"
+      botLogoButton.style.left = "0px"
+      botLogoButton.style.textAlign = "center"
+      botLogoButton.innerHTML = `<button id="botLogoButtonLink" style="margin: auto auto; padding: 10px; background: #fff; border: 0px;"><img style="width: 200px; background: #fff;" src="https://i.ibb.co/xgYpv6T/giveaway-Bot-Logo-Blue.png" /></button>`
   
-      var addOpenControlsToPage = setInterval(() => {
-        if (document.querySelector("#giveaway-subscribe-container")){
-          clearInterval(addOpenControlsToPage) 
-          document.querySelector("#giveaway-numbers-container").classList.replace("a-span5", "a-span4")
-          document.querySelector("#giveaway-numbers-container").style.marginRight = "0px"
-          document.querySelector("#giveaway-subscribe-container").classList.replace("a-span7", "a-span4")
-          // document.querySelector(".giveaway-result-info-bar .a-row").appendChild(openControls)
-          document.body.prepend(openControls)
-          document.querySelector("#openControlsLink").onclick = function() {
-            document.body.style.overflow = "hidden"
-            document.querySelector("#controlPanel").style.display = "flex"
-          }
-        }
-      }, 100)
+      document.body.appendChild(botLogoButton)
+      document.body.style.overflow = "hidden"
+      document.querySelector("#botLogoButtonLink").onclick = function() {
+        document.body.style.overflow = "hidden"
+        document.querySelector("#controlPanel").style.display = "flex"
+      }
     }
 
     document.querySelector("#closeControls").onclick = function() {
@@ -140,7 +118,6 @@
       document.body.style.overflow = "auto"
       if(GM_getValue("running")){
         GM_setValue("running", false)
-        // GM_setValue("processingGiveaways", false)
         document.querySelector('#botFrame').remove()
       }
 
@@ -161,7 +138,7 @@
 
       document.querySelector("#run").style.display = "none"
       document.querySelector("#stop").style.display = "block"
-      document.querySelector("#currentSessionEntries").style.display = "block"
+      document.querySelector("#currentSessionEntries").style.visibility = "visible"
           
       var iframe = document.createElement('iframe');
       iframe.id = "botFrame"
@@ -173,15 +150,14 @@
       iframe.src = GM_getValue("mainPageUrl")
       document.querySelector("#botFrameContainer").appendChild(iframe)      
       document.querySelector("#botOptions").style.display = "none"      
-      // document.querySelector("#a-page").style.display = "none"
 
       setInterval(function() {
-        document.querySelector("#currentSessionEntries").innerHTML = "Current Session Entries: " + GM_getValue("currentSessionEntries")
-        document.querySelector("#lifetimeEntries").innerHTML = " Lifetime Entries: " + GM_getValue("lifetimeEntries")
+        document.querySelector("#currentSessionEntriesValue").innerHTML = GM_getValue("currentSessionEntries")
+        document.querySelector("#lifetimeEntriesValue").innerHTML = GM_getValue("lifetimeEntries")
         if (!GM_getValue("running")) {
           GM_setValue("running", false)
           GM_setValue("processingGiveaways", false)
-          document.querySelector("#currentSessionEntries").style.display = "none"
+          document.querySelector("#currentSessionEntries").style.visibility = "hidden"
           document.querySelector("#stop").style.display = "none"
           document.querySelector("#run").style.display = "block"
         }
@@ -198,7 +174,6 @@
 
     document.querySelector("#stop").onclick = function() {
       GM_setValue("running", false)
-      // GM_setValue("nextGiveaway", false)
       document.querySelector("#currentSessionEntries").style.display = "none"
       document.querySelector("#stop").style.display = "none"
       document.querySelector("#run").style.display = "block"
@@ -221,15 +196,20 @@
 
   async function getGiveaways() {
     var setGiveaways = setInterval(() => {
-      console.log('GET')
+      // go to first page if no giveaways are shown
+      if(document.querySelector('#giveaway-listing-page-no-giveaway')){
+        clearInterval(setGiveaways)
+        GM_setValue("mainPageUrl", 'https://www.amazon.com/ga/giveaways/?pageId=1')
+        window.location.href = 'https://www.amazon.com/ga/giveaways/?pageId=1'
+      }
       var giveawayItems = document.querySelectorAll(".a-link-normal.item-link")
       if(giveawayItems.length > 0){
         var allowedGiveaways = []
         giveawayItems.forEach(item => {
           if(!(
-            GM_getValue("disableKindle") && item.innerText.includes('Kindle') ||
-            GM_getValue("disableVideo") && item.innerText.includes('Watch a short video') ||
-            GM_getValue("disableFollow") && item.innerText.includes('Follow'))
+            (GM_getValue("disableKindle") && item.innerText.includes('Kindle')) ||
+            (GM_getValue("disableVideo") && item.innerText.includes('Watch a short video')) ||
+            (GM_getValue("disableFollow") && item.innerText.includes('Follow')))
           ){
             allowedGiveaways.push(item.href.split('?')[0])
           }
@@ -245,7 +225,6 @@
   }
 
   async function nextGiveaway() {
-    console.log("next")
     GM_setValue("processingGiveaways", true)
     let idx = GM_getValue("currentIdx")
     let nextGiveaway = GM_getValue(`giveaway-${idx}`)
@@ -275,34 +254,28 @@
         continueButton = document.querySelector(".youtube-continue-button")
       }
       var waitForEntry = setInterval(() => {
-        console.log(!continueButton.classList.contains("a-button-disabled"))
         if (!continueButton.classList.contains("a-button-disabled")) {
           clearInterval(waitForEntry)
           continueButton.click()
           handleSubmit()
         }
-      }, 3000)
+      }, 1000)
+    } else {
+      if (document.querySelector('.follow-author-continue-button')) {
+        if(GM_getValue('disableFollow')){
+          nextGiveaway()
+        } else {
+          document.querySelector('.follow-author-continue-button').click()
+        }
+      }
+      var submitEntry = setInterval(() => {
+        if (document.querySelector(".box-click-area")) {
+          document.querySelector(".box-click-area").click()
+          clearInterval(submitEntry)
+          handleSubmit()
+        }
+      }, 100)
     }
-      // don't enter givaways with follow requirements
-      else if (document.querySelector("#en_fo_follow-announce")) {
-        nextGiveaway()
-      }
-      // otherwise, enter giveaway immediately
-      else {
-        console.log("submit")
-        var submitEntry = setInterval(() => {
-          // if (document.querySelector("#ts_en_enter")) {
-          //   document.querySelector("#ts_en_enter span input").click()
-          //   clearInterval(submitEntry)
-          //   handleSubmit()
-          // }
-          if (document.querySelector(".box-click-area")) {
-            document.querySelector(".box-click-area").click()
-            clearInterval(submitEntry)
-            handleSubmit()
-          }
-        }, 100)
-      }
   }
 
   // check page until results show up then continue to next giveaway in queue if not a winner
@@ -332,8 +305,6 @@
   }
 
   async function main() {
-    console.log('MAIN')
-    // var document.querySelector = window.document.querySelector
     if (GM_getValue("running")) {
       // submit login info if redirected to signin page
       if (isSignIn) {
@@ -380,12 +351,16 @@
   }
 
   async function solveCaptcha() {
+    if(GM_getValue('twoCaptchaKey').length > 0){
+      alert('No 2Captcha API key was provided. Captcha cannot be solved without a key.')
+    }
     let base64Img = getBase64Image(
       document.querySelector("#image_captcha img").src,
       res => {
         sendCaptcha(res)
       },
-      () => {
+      err => {
+        console.log(err)
       }
     )
   }
