@@ -17,3 +17,6 @@ To install Amazon Giveaway Automator, click [here](https://github.com/TyGooch/am
 ## Usage
 
 Once installed, ensure Tampermonkey is enabled and navigate to [Amazon Giveaways](https://www.amazon.com/ga/giveaways). A control panel will show up under the search bar. Click "Start Automator" and a new window will open and begin automating your giveaway entries.
+
+## Captcha Solving
+Version 2.0 now has the ability to solve captchas using the 2captcha API. If you aren't a current customer please consider signing up using my [referral link](https://2captcha.com?from=7493321). Once you have a key, paste it into the 2Captcha API Key field in the control panel and you're good to go.
