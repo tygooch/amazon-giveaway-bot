@@ -31,7 +31,6 @@
   )
 
   async function init() { 
-    console.log('init')   
     GM_setValue("running", false)
     
     if(!GM_getValue("lifetimeEntries")){
@@ -50,7 +49,7 @@
       '  <div id="botOptions" style="display: flex; padding: 16px; padding-bottom: 0px; border-top: 1px solid #e9ecef; text-align: left;">\n' +
       '    <div style="padding-bottom: 10px;"><label for="twoCaptchaKey">2Captcha API Key</label><input id="twoCaptchaKey" style="width: 250px;" name="twoCaptchaKey" type="text" placeholdertype="Enter your key here"></input></div>\n' +
       '	    <div style="margin-left: 50px;">\n' +
-      '	  	  <label id="">Filter</label>\n' +
+      '	  	  <label id="">Disabled Giveaways</label>\n' +
       '	  	  <div style="padding-left: 7px;">\n' +
       '       <div><input id="disableKindle" name="disableKindle" type="checkbox"></input><span> Kindle Books</span></div>\n' +
       '	  	    <div><input id="disableVideo" name="disableVideo" type="checkbox"></input><span> Requires Video</span></div>\n' +
@@ -99,13 +98,14 @@
       var botLogoButton = document.createElement("div")
       botLogoButton.id = "botLogoButton"
       botLogoButton.style.width = "100vw"
-      botLogoButton.style.position = "absolute"
-      botLogoButton.style.top = "110px"
+      botLogoButton.style.height = "0px"
+      botLogoButton.style.position = "relative"
+      botLogoButton.style.top = "10px"
       botLogoButton.style.left = "0px"
       botLogoButton.style.textAlign = "center"
       botLogoButton.innerHTML = `<button id="botLogoButtonLink" style="margin: auto auto; padding: 10px; background: #fff; border: 0px;"><img style="width: 200px; background: #fff;" src="https://i.ibb.co/xgYpv6T/giveaway-Bot-Logo-Blue.png" /></button>`
   
-      document.body.appendChild(botLogoButton)
+      document.querySelector('header').appendChild(botLogoButton)
       document.body.style.overflow = "hidden"
       document.querySelector("#botLogoButtonLink").onclick = function() {
         document.body.style.overflow = "hidden"
@@ -162,7 +162,7 @@
           document.querySelector("#run").style.display = "block"
         }
       }, 100)
-      window.addEventListener(
+      unsafeWindow.addEventListener(
         "unload",
         () => {
           GM_setValue("running", false)
@@ -174,7 +174,7 @@
 
     document.querySelector("#stop").onclick = function() {
       GM_setValue("running", false)
-      document.querySelector("#currentSessionEntries").style.display = "none"
+      document.querySelector("#currentSessionEntries").style.visibility = "hidden"
       document.querySelector("#stop").style.display = "none"
       document.querySelector("#run").style.display = "block"
       document.querySelector('#botFrame').remove()
@@ -240,7 +240,7 @@
   async function enterGiveaway() {
       // if giveaway has video requirement, watch the video then enter
     let video = document.querySelector(".video")
-    if (video){
+    if (video || document.querySelector('#giveaway-youtube-video-watch-text') ||  document.querySelector('#airy-container')){
       if(GM_getValue("disableVideo")) {
         nextGiveaway()  
       }
@@ -249,28 +249,54 @@
         video.play()
         video.muted = true
         continueButton = document.querySelector(".amazon-video-continue-button")
-      } else {
+      } else if(video){
         document.querySelector(".youtube-video div").click()
         continueButton = document.querySelector(".youtube-continue-button")
+      } else if(document.querySelector('#airy-container')) {
+        var playAiryVideo = setInterval(() => {
+          if(document.querySelector('.airy-play-hint')){
+            clearInterval(playAiryVideo)
+            document.querySelector('.airy-play-hint').click()
+            document.querySelector('.airy-audio-toggle').click()
+            continueButton = document.querySelector("#enter-video-button")
+          }
+        }, 100)
+      } else {
+        continueButton = document.querySelector("#enter-youtube-video-button")
       }
       var waitForEntry = setInterval(() => {
+        // if(!continueButton){
+        //   if(!continueButton)
+        // }
         if (!continueButton.classList.contains("a-button-disabled")) {
           clearInterval(waitForEntry)
-          continueButton.click()
+          if(continueButton.id.includes = "-video-button"){
+            continueButton.querySelector('input').click()
+          } else {
+            continueButton.click()
+          }
           handleSubmit()
         }
       }, 1000)
     } else {
-      if (document.querySelector('.follow-author-continue-button')) {
+      if (document.querySelector('.follow-author-continue-button') || document.querySelector('.qa-amazon-follow-button')) {
         if(GM_getValue('disableFollow')){
           nextGiveaway()
         } else {
-          document.querySelector('.follow-author-continue-button').click()
+          if(document.querySelector('.qa-amazon-follow-button')){
+            document.querySelector('.qa-amazon-follow-button').click()
+          } else {
+            document.querySelector('.follow-author-continue-button').click()
+          }
         }
       }
       var submitEntry = setInterval(() => {
-        if (document.querySelector(".box-click-area")) {
-          document.querySelector(".box-click-area").click()
+        var boxToClick = document.querySelector('#box_click_target')
+        if(!boxToClick){
+          boxToClick = document.querySelector(".box-click-area")
+        }
+        if (boxToClick) {
+          boxToClick.click()
           clearInterval(submitEntry)
           handleSubmit()
         }
@@ -284,10 +310,18 @@
     var tryAgain = setTimeout(enterGiveaway, 10000)
 
     var getResults = setInterval(() => {
-      if (document.querySelector(".participation-post-entry-container")) {
+      if (
+        document.querySelector(".participation-post-entry-container") ||
+        document.querySelector('#giveaway-addToCart-btn') ||
+        document.querySelector('#free-sample-download-btn')
+       
+      ) {
         clearTimeout(tryAgain)
         clearInterval(getResults)
-        if (document.querySelector(".prize-title").innerHTML.includes("won")) {
+        if (
+          (document.querySelector(".prize-title") && document.querySelector(".prize-title").innerHTML.includes("won")) ||
+          (document.querySelector(".prize-header-container") && document.querySelector(".prize-header-container").innerHTML.includes("won"))
+        ) {
           document.querySelector("#lu_co_ship_box-announce").click()
           alert('Winner!')
           // nextGiveaway()
@@ -323,14 +357,14 @@
         }
       } else if (isGiveaway) {
         var waitForTitle = setInterval(() => {
-          if(document.querySelector(".prize-title") || document.querySelector('.a-spacing-small.a-size-extra-large')){
+          if(document.querySelector(".prize-title") || document.querySelector(".prize-header-container") || document.querySelector('.a-spacing-small.a-size-extra-large')){
             clearInterval(waitForTitle)
             // if giveaway has already been entered, continue on to next giveaway in queue
             if (
               document.querySelector('.a-spacing-small.a-size-extra-large') ||
-              (document.querySelector(".prize-title") && document.querySelector(".prize-title").innerText.includes("didn't win"))
+              (document.querySelector(".prize-title") && document.querySelector(".prize-title").innerText.includes("didn't win")) ||
+              (document.querySelector(".prize-header-container") && document.querySelector(".prize-header-container").innerText.includes("didn't win"))
             ){
-              console.log('already done')
               nextGiveaway()
             }
             // use 2captcha to solve captchas if present
@@ -338,8 +372,7 @@
               solveCaptcha()
             }
             // otherwise enter giveaway
-            else if(document.querySelector('.participation-need-action')){
-              console.log('enter')
+            else if(document.querySelector('.participation-need-action') || document.querySelector('.participation-action-item')){
               enterGiveaway()
             }
           }
@@ -351,7 +384,7 @@
   }
 
   async function solveCaptcha() {
-    if(GM_getValue('twoCaptchaKey').length > 0){
+    if(!GM_getValue('twoCaptchaKey').length > 0){
       alert('No 2Captcha API key was provided. Captcha cannot be solved without a key.')
     }
     let base64Img = getBase64Image(
