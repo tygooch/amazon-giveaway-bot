@@ -1,7 +1,7 @@
 # Amazon Giveaway Bot
 <!-- ![AmazonGiveawayBotLogo](/assets/giveawayBotLogoBlue.png =250x) -->
 <p align="center">
-  <img src="/assets/giveawayBotLogoBlue.png"  width="200">
+  <img src="/assets/winningScreenshot.png"  width="600">
 </p>
 
 <p align="center">
