@@ -31,6 +31,7 @@
   )
 
   async function init() { 
+    console.log('init')   
     GM_setValue("running", false)
     
     if(!GM_getValue("lifetimeEntries")){
@@ -42,7 +43,6 @@
       "  style=\"font-family: Roboto,\\'Helvetica Neue\\',Helvetica,Arial,sans-serif;position: relative; min-width: 600px; margin: auto auto; color: #212529; background-color: #fff; border: 1px solid transparent; border-radius: .28571429rem; overflow: hidden; z-index: 9999; text-align: left; display: flex; flex-direction: column; justify-content: center;\">\n" +
       '  <div>\n' +
       '    <div style="padding: 16px; margin-top: 0; text-align: center;"><img style="width: 200px;  margin-left: auto; margin-right: auto;" src="https://i.ibb.co/xgYpv6T/giveaway-Bot-Logo-Blue.png" /></div>\n' +
-      // '    <h1 class="textColor" style="padding: 16px 16px 0px 16px; margin-top: 0;">Amazon Giveaway Bot</h1>\n' +
       '    <button id="closeControls" style="margin-top: 8px; margin-right: 10px; border: 0; padding: 0; position: absolute; right: 0px; top: 0px; min-height: 1em; line-height: 1em; font-size: 2rem; color: rgba(0,0,0,.5)">×</button>\n' +
       '  </div>\n' +
       '  <div id="botFrameContainer" style="margin: auto auto; max-width: 600px; max-height: 384px;"></div>\n' +
@@ -59,6 +59,7 @@
       '  </div>\n' +
       '  <div style="display:flex; padding: 16px; justify-content: space-between;">\n' +
       '    <span style="display: inline-block;" id="lifetimeEntries"><b>Giveaways Entered: </b><span style="" id="lifetimeEntriesValue"></span><span id="currentSessionEntries"> (<span style="" id="currentSessionEntriesValue"></span> this session)</span></span>\n' +
+      '    <span style="display: inline-block;" id="totalWins"><b>Giveways Won: </b><span style="" id="totalWinsValue"></span></span>\n' +
       '  </div>\n' +
       '  <div style="border-top: 1px solid #e9ecef; background-color: rgb(249, 250, 251); display: flex; justify-content: flex-end; padding: 16px; text-align: left;">\n' +
       '  		<button id="run" style="background-color: #2185d0; border: 0; border-radius: .28571429rem; color: #fff; padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Start Bot</button>\n' +
@@ -91,6 +92,7 @@
         document.querySelector("#twoCaptchaKey").value = GM_getValue("twoCaptchaKey")
       }
       document.querySelector("#lifetimeEntriesValue").innerHTML = GM_getValue("lifetimeEntries")
+      document.querySelector("#totalWinsValue").innerHTML = GM_getValue("totalWins")
       document.querySelector("#currentSessionEntries").style.visibility = "hidden"
       document.querySelector("#twoCaptchaKey").style.border = "1px solid #ced4da"
       document.body.style.overflow = "hidden"
@@ -128,7 +130,9 @@
       GM_setValue("processingGiveaways", false)
       GM_setValue("currentSessionEntries", 0)
       GM_setValue("currentIdx", 0)
-      GM_setValue("mainPageUrl", window.location.href)
+      if(GM_getValue("mainPageUrl")){
+        GM_setValue("mainPageUrl", window.location.href)
+      }
       if (document.querySelector("#twoCaptchaKey").value.length > 0) {
         GM_setValue("twoCaptchaKey", document.querySelector("#twoCaptchaKey").value)
       }
@@ -154,6 +158,7 @@
       setInterval(function() {
         document.querySelector("#currentSessionEntriesValue").innerHTML = GM_getValue("currentSessionEntries")
         document.querySelector("#lifetimeEntriesValue").innerHTML = GM_getValue("lifetimeEntries")
+        document.querySelector("#totalWinsValue").innerHTML = GM_getValue("totalWins")
         if (!GM_getValue("running")) {
           GM_setValue("running", false)
           GM_setValue("processingGiveaways", false)
@@ -195,6 +200,7 @@
   }
 
   async function getGiveaways() {
+    console.log('get')
     var setGiveaways = setInterval(() => {
       // go to first page if no giveaways are shown
       if(document.querySelector('#giveaway-listing-page-no-giveaway')){
@@ -211,15 +217,27 @@
             (GM_getValue("disableVideo") && item.innerText.includes('Watch a short video')) ||
             (GM_getValue("disableFollow") && item.innerText.includes('Follow')))
           ){
-            allowedGiveaways.push(item.href.split('?')[0])
+            let visited = GM_getValue('visitedLinks')
+            if(!visited.includes(item.href.split('?')[0].replace('https://www.amazon.com/ga/p/', ''))){
+              allowedGiveaways.push(item.href.split('?')[0])
+            }
           }
         })
-        GM_setValue('maxIdx', allowedGiveaways.length - 1)
-        allowedGiveaways.forEach((url, idx) => {
-          GM_setValue(`giveaway-${idx}`,url)
-        })
+        if(allowedGiveaways.length > 0){
+          GM_setValue('maxIdx', allowedGiveaways.length - 1)
+          allowedGiveaways.forEach((url, idx) => {
+            GM_setValue(`giveaway-${idx}`,url)
+          })
+          nextGiveaway()
+        } else {
+          console.log('NONE')
+          let nextPage = window.location.href.split("pageId=")
+          nextPage[nextPage.length - 1] = parseInt(nextPage[nextPage.length - 1]) + 1
+          nextPage = nextPage.join("pageId=")
+          GM_setValue("mainPageUrl", nextPage)
+          window.location.href = nextPage
+        }
         clearInterval(setGiveaways)
-        nextGiveaway()
       }
     }, 100)
   }
@@ -231,6 +249,18 @@
     idx += 1
     GM_setValue("currentIdx", idx)
     if (idx <= GM_getValue("maxIdx")) {
+      let visited = GM_getValue('visitedLinks')
+      if(!visited){
+        GM_setValue('visitedLinks', '|' + nextGiveaway.replace('https://www.amazon.com/ga/p/', ''))
+      } else {
+        GM_setValue('visitedLinks', visited + '|' + nextGiveaway.replace('https://www.amazon.com/ga/p/', ''))
+      }
+      visited = GM_getValue('visitedLinks')
+      if(visited.length > 27500){
+        visited = visited.substr(visited.length - 27500);
+      }
+      GM_setValue('visitedLinks', visited)
+      // console.log(GM_getValue('visitedLinks'))
       window.location.href = nextGiveaway
     } else {
       window.location.href = GM_getValue("mainPageUrl")
@@ -265,12 +295,13 @@
         continueButton = document.querySelector("#enter-youtube-video-button")
       }
       var waitForEntry = setInterval(() => {
+        console.log(continueButton)
         // if(!continueButton){
         //   if(!continueButton)
         // }
         if (!continueButton.classList.contains("a-button-disabled")) {
           clearInterval(waitForEntry)
-          if(continueButton.id.includes = "-video-button"){
+          if(continueButton.id.includes("-video-button")){
             continueButton.querySelector('input').click()
           } else {
             continueButton.click()
@@ -291,6 +322,7 @@
         }
       }
       var submitEntry = setInterval(() => {
+        console.log('submit')
         var boxToClick = document.querySelector('#box_click_target')
         if(!boxToClick){
           boxToClick = document.querySelector(".box-click-area")
@@ -322,9 +354,19 @@
           (document.querySelector(".prize-title") && document.querySelector(".prize-title").innerHTML.includes("won")) ||
           (document.querySelector(".prize-header-container") && document.querySelector(".prize-header-container").innerHTML.includes("won"))
         ) {
-          document.querySelector("#lu_co_ship_box-announce").click()
+          var wins = GM_getValue('totalWins')
+          if(!wins){
+            GM_setValue('totalWins', 1)
+          } else {
+            GM_setValue('totalWins', wins + 1)
+          }
+          if(document.querySelector(".a-button-input")){
+            document.querySelector(".a-button-input").click()
+          } if(document.querySelector("#lu_co_ship_box")){
+            document.querySelector("#lu_co_ship_box").click()
+          }
           alert('Winner!')
-          // nextGiveaway()
+          nextGiveaway()
         } else {
           nextGiveaway()
         }
@@ -343,9 +385,13 @@
       // submit login info if redirected to signin page
       if (isSignIn) {
         doSignIn()
+        if(document.querySelector('#auth-captcha-img')){
+          solveCaptcha()
+        }
       } else if (isMainPage) {
         if (GM_getValue("currentIdx") > GM_getValue("maxIdx")) {
           GM_setValue("currentIdx", 0)
+          GM_setValue("maxIdx", 23)
           let nextPage = window.location.href.split("pageId=")
           nextPage[nextPage.length - 1] = parseInt(nextPage[nextPage.length - 1]) + 1
           nextPage = nextPage.join("pageId=")
@@ -432,7 +478,7 @@
                     })
                     solveCaptcha()
                   } else {
-                    enterGiveaway()
+                    main()
                   }
                 }, 1000);
               } else if (captchaAnswer.request === "ERROR_CAPTCHA_UNSOLVABLE") {
