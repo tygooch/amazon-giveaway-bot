@@ -37,6 +37,9 @@
     if(!GM_getValue("lifetimeEntries")){
       GM_setValue("lifetimeEntries", 0)
     }
+    if(!GM_getValue("totalWins")){
+      GM_setValue("totalWins", 0)
+    }
 
     var controlsTemplate =
       '<div id="container"\n' +
@@ -130,7 +133,7 @@
       GM_setValue("processingGiveaways", false)
       GM_setValue("currentSessionEntries", 0)
       GM_setValue("currentIdx", 0)
-      if(GM_getValue("mainPageUrl")){
+      if(!GM_getValue("mainPageUrl")){
         GM_setValue("mainPageUrl", window.location.href)
       }
       if (document.querySelector("#twoCaptchaKey").value.length > 0) {
@@ -355,11 +358,7 @@
           (document.querySelector(".prize-header-container") && document.querySelector(".prize-header-container").innerHTML.includes("won"))
         ) {
           var wins = GM_getValue('totalWins')
-          if(!wins){
-            GM_setValue('totalWins', 1)
-          } else {
-            GM_setValue('totalWins', wins + 1)
-          }
+          GM_setValue('totalWins', wins + 1)
           if(document.querySelector(".a-button-input")){
             document.querySelector(".a-button-input").click()
           } if(document.querySelector("#lu_co_ship_box")){
