@@ -221,7 +221,7 @@
             (GM_getValue("disableFollow") && item.innerText.includes('Follow')))
           ){
             let visited = GM_getValue('visitedLinks')
-            if(!visited.includes(item.href.split('?')[0].replace('https://www.amazon.com/ga/p/', ''))){
+            if(!visited || !visited.includes(item.href.split('?')[0].replace('https://www.amazon.com/ga/p/', ''))){
               allowedGiveaways.push(item.href.split('?')[0])
             }
           }
