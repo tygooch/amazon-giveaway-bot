@@ -12,7 +12,7 @@ Make sure to use the [Google Chrome](https://chrome.google.com/) web browser and
 
 ## Installation
 
-To install Amazon Giveaway Bot, click [here](https://github.com/TyGooch/amazon-giveaway-automator/raw/master/amazonGiveawayBot.user.js). If Tampermonkey is correctly installed, you will be asked to add the script to your dashboard. Confirm the installation and start winning some giveaways.
+To install Amazon Giveaway Bot, click [here](https://github.com/TyGooch/amazon-giveaway-bot/raw/master/amazonGiveawayBot.user.js). If Tampermonkey is correctly installed, you will be asked to add the script to your dashboard. Confirm the installation and start winning some giveaways.
 
 ## Usage
 

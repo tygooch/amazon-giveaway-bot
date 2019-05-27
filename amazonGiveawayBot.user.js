@@ -4,7 +4,7 @@
 // @name         Amazon Giveaway Bot
 // @version      2.0
 // @author       Ty Gooch
-// @updateURL    https://github.com/TyGooch/amazon-giveaway-automator/raw/master/amazonGiveawayBot.user.js
+// @updateURL    https://github.com/TyGooch/amazon-giveaway-bot/raw/master/amazonGiveawayBot.user.js
 // @description  Automates Amazon giveaway entries
 // @match        https://www.amazon.com/ga/*
 // @match        https://www.amazon.com/ap/signin*
