@@ -1,8 +1,6 @@
 # Amazon Giveaway Bot
-<!-- ![AmazonGiveawayBotLogo](/assets/giveawayBotLogoBlue.png =250x) -->
-<p align="center">
-  <img src="/assets/winningScreenshot.png"  width="600">
-</p>
+
+![AmazonGiveawayBotLogo](/assets/screenshot.png)
 
 <p align="center">
   JS script to automate entry into <a href=https://www.amazon.com/ga/giveaways>Amazon Giveaways</a>.
