@@ -2,7 +2,7 @@
 //
 // ==UserScript==
 // @name         Amazon Giveaway Bot
-// @version      2.1
+// @version      2.0.1
 // @author       Ty Gooch
 // @updateURL    https://github.com/TyGooch/amazon-giveaway-bot/raw/master/amazonGiveawayBot.user.js
 // @description  Automates Amazon giveaway entries
@@ -79,7 +79,10 @@
       "  </div>\n" +
       '  <div id="botFrameContainer" style="background-color: #fff; width: 600px; height: 287.5px; padding: 0px;"></div>\n' +
       '  <div id="botOptions" style=" background-color: #fff; width: 100%; display: flex; padding: 16px; border-top: 1px solid rgba(34,36,38,.15); text-align: left; justify-content: space-between;">\n' +
-      '    <div style="padding-bottom: 10px;"><label for="twoCaptchaKey">2Captcha API Key</label><input id="twoCaptchaKey" style="width: 250px;" name="twoCaptchaKey" type="text" placeholdertype="Enter your key here"></input></div>\n' +
+      '	    <div style="">\n' +
+      '      <div style="padding-bottom: 10px;"><label for="twoCaptchaKey">2Captcha API Key</label><input id="twoCaptchaKey" style="width: 250px;" name="twoCaptchaKey" type="text" placeholdertype="Enter your key here"></input></div>\n' +
+      '       <div><input id="turboMode" name="turboMode" type="checkbox"></input><span> Enable Turbo Mode (Experimental)</span></div>\n' +
+      "	  	</div>\n" +
       '	    <div style="">\n' +
       '	  	  <label id="">Filtered Giveaways</label>\n' +
       '	  	  <div style="padding-left: 7px;">\n' +
@@ -130,6 +133,7 @@
     document.querySelector("#disableVideo").checked = GM_getValue("disableVideo")
     document.querySelector("#disableFollow").checked = GM_getValue("disableFollow")
     document.querySelector("#disableKindle").checked = GM_getValue("disableKindle")
+    document.querySelector("#turboMode").checked = GM_getValue("turboMode")
     if (GM_getValue("twoCaptchaKey")) {
       document.querySelector("#twoCaptchaKey").value = GM_getValue("twoCaptchaKey")
     }
@@ -170,6 +174,7 @@
         GM_setValue("disableKindle", document.querySelector("#disableKindle").checked)
         GM_setValue("disableVideo", document.querySelector("#disableVideo").checked)
         GM_setValue("disableFollow", document.querySelector("#disableFollow").checked)
+        GM_setValue("turboMode", document.querySelector("#turboMode").checked)
 
         document.querySelector("#currentSessionEntriesValue").innerHTML = GM_getValue("currentSessionEntries")
         document.querySelector("#lifetimeEntriesValue").innerHTML = GM_getValue("lifetimeEntries")
@@ -242,7 +247,8 @@
           ) {
             let visited = GM_getValue("visitedLinks")
             if (!visited || !visited.includes(item.href.split("?")[0].replace("https://www.amazon.com/ga/p/", ""))) {
-              allowedGiveaways.push(item.href.split("?")[0])
+              // allowedGiveaways.push(item.href.split("?")[0])
+              allowedGiveaways.push(item.href)
             }
           }
         })
@@ -283,114 +289,6 @@
     } else {
       goToNextPage()
     }
-  }
-
-  async function doEnter() {
-    var csrfToken = botFrame.contentWindow.P.pageContext.csrfToken
-    var giveawayToken = botFrame.contentWindow.location.href.split("/p/")[1]
-    fetch(`https://www.amazon.com/gax/-/pex/api/v1/giveaway/${giveawayToken}/participation`, {
-      credentials: "include",
-      headers: {
-        accept: "application/json, text/plain, */*",
-        "accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
-        "content-type": "application/json;charset=UTF-8",
-        "x-amzn-csrf": csrfToken
-      },
-      referrer: botFrame.contentWindow.location.href,
-      referrerPolicy: "no-referrer-when-downgrade",
-      body: null,
-      method: "GET",
-      mode: "cors"
-    })
-      .then(res => res.json())
-      .then(data => {
-        addToHistory(botFrame.contentWindow.location.href)
-        let lifetimeEntries = GM_getValue("lifetimeEntries")
-        lifetimeEntries += 1
-        GM_setValue("lifetimeEntries", lifetimeEntries)
-        currentSessionEntries = GM_getValue("currentSessionEntries")
-        currentSessionEntries += 1
-        GM_setValue("currentSessionEntries", currentSessionEntries)
-        if (data.success.status !== "notParticipated") {
-          console.log(data.success.status)
-          nextGiveaway()
-          return
-        }
-        if (data.success.nextUserAction) {
-          // console.log("NEXT")
-          fetch(`https://www.amazon.com/gax/-/pex/api/v1/giveaway/${giveawayToken}/participation/nextAction`, {
-            credentials: "include",
-            headers: {
-              accept: "application/json, text/plain, */*",
-              "accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
-              "content-type": "application/json;charset=UTF-8",
-              "x-amzn-csrf": csrfToken
-            },
-            referrer: botFrame.contentWindow.location.href,
-            referrerPolicy: "no-referrer-when-downgrade",
-            body: JSON.stringify({ submission: { name: data.success.nextUserAction.name } }),
-            method: "PUT",
-            mode: "cors"
-          })
-            .then(res => res.json())
-            .then(data => {
-              let encryptedState = { encryptedState: data.success.encryptedState }
-
-              fetch(`https://www.amazon.com/gax/-/pex/api/v1/giveaway/${giveawayToken}/participation`, {
-                credentials: "include",
-                headers: {
-                  accept: "application/json, text/plain, */*",
-                  "accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
-                  "content-type": "application/json;charset=UTF-8",
-                  "x-amzn-csrf": csrfToken
-                },
-                referrer: botFrame.contentWindow.location.href,
-                referrerPolicy: "no-referrer-when-downgrade",
-                body: `{"encryptedState":"${data.success.encryptedState}"}`,
-                method: "POST",
-                mode: "cors"
-              })
-                .then(res => res.json())
-                .then(data => {
-                  console.log(data.success.status)
-                  if (data.success.status !== "won") {
-                    nextGiveaway()
-                  }
-                })
-                .catch(err => {
-                  nextGiveaway()
-                  // console.log(err)
-                })
-            })
-        } else {
-          fetch(`https://www.amazon.com/gax/-/pex/api/v1/giveaway/${giveawayToken}/participation`, {
-            credentials: "include",
-            headers: {
-              accept: "application/json, text/plain, */*",
-              "accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
-              "content-type": "application/json;charset=UTF-8",
-              "x-amzn-csrf": csrfToken
-            },
-            referrer: botFrame.contentWindow.location.href + "?fsrc=glp&nav=amz&ref_=aga_p_vg_lp_p12_g2_nodup_dgv",
-            referrerPolicy: "no-referrer-when-downgrade",
-            body: JSON.stringify({}),
-            method: "POST",
-            mode: "cors"
-          })
-            .then(res => res.json())
-            .then(data => {
-              // console.log(data)
-              console.log(data.success.status)
-              if (data.success.status !== "won") {
-                nextGiveaway()
-              }
-            })
-            .catch(err => {
-              nextGiveaway()
-              // console.log(err)
-            })
-        }
-      })
   }
 
   async function enterGiveaway() {
@@ -541,32 +439,35 @@
         GM_setValue("mainPageUrl", botFrame.contentWindow.location.href)
         getGiveaways()
       } else if (isGiveaway) {
-        doEnter()
-        // var waitForTitle = setInterval(() => {
-        //   if (getEl(".prize-title") || getEl(".prize-header-container") || getEl(".a-spacing-small.a-size-extra-large")) {
-        //     clearInterval(waitForTitle)
-        //     // if giveaway has already been entered, continue on to next giveaway in queue
-        //     if (
-        //       (!(getEl("#title") && getEl("#title").innerHTML.includes("won!")) && getEl(".a-spacing-small.a-size-extra-large")) ||
-        //       (getEl(".prize-title") && getEl(".prize-title").innerText.includes("didn't win")) ||
-        //       (getEl(".prize-header-container") && getEl(".prize-header-container").innerText.includes("didn't win"))
-        //     ) {
-        //       console.log("already entered")
-        //       addToHistory(botFrame.contentWindow.location.href)
-        //       nextGiveaway()
-        //     }
-        //     // use 2captcha to solve captchas if present
-        //     else if (getEl("#giveaway-captcha-container")) {
-        //       solveCaptcha()
-        //     }
-        //     // otherwise enter giveaway
-        //     else if (getEl(".participation-need-action") || getEl(".participation-action-item")) {
-        //       enterGiveaway()
-        //     } else if (getEl(".participation-need-login")) {
-        //       getEl(".a-button-inner a").click()
-        //     }
-        //   }
-        // }, 100)
+        if (GM_getValue("turboMode")) {
+          lazyEnter()
+        } else {
+          var waitForTitle = setInterval(() => {
+            if (getEl(".prize-title") || getEl(".prize-header-container") || getEl(".a-spacing-small.a-size-extra-large")) {
+              clearInterval(waitForTitle)
+              // if giveaway has already been entered, continue on to next giveaway in queue
+              if (
+                (!(getEl("#title") && getEl("#title").innerHTML.includes("won!")) && getEl(".a-spacing-small.a-size-extra-large")) ||
+                (getEl(".prize-title") && getEl(".prize-title").innerText.includes("didn't win")) ||
+                (getEl(".prize-header-container") && getEl(".prize-header-container").innerText.includes("didn't win"))
+              ) {
+                console.log("already entered")
+                addToHistory(botFrame.contentWindow.location.href)
+                nextGiveaway()
+              }
+              // use 2captcha to solve captchas if present
+              else if (getEl("#giveaway-captcha-container")) {
+                solveCaptcha()
+              }
+              // otherwise enter giveaway
+              else if (getEl(".participation-need-action") || getEl(".participation-action-item")) {
+                enterGiveaway()
+              } else if (getEl(".participation-need-login")) {
+                getEl(".a-button-inner a").click()
+              }
+            }
+          }, 100)
+        }
       }
     }
   }
@@ -692,5 +593,119 @@
     nextPage[nextPage.length - 1] = parseInt(nextPage[nextPage.length - 1]) + 1
     nextPage = nextPage.join("pageId=")
     botFrame.contentWindow.location.href = nextPage
+  }
+
+  // Experimental functionality to enter giveaways without interacting with page elements.
+  // I've tested this and it works however after entering >2000 giveaways with this method, none were won
+  // Not sure if this is because Amazon can detect this.
+  async function lazyEnter() {
+    console.log(botFrame.contentWindow.location.href)
+    var csrfToken = botFrame.contentWindow.P.pageContext.csrfToken
+    var giveawayToken = botFrame.contentWindow.location.href.split("/p/")[1].split("?")[0]
+    fetch(`https://www.amazon.com/gax/-/pex/api/v1/giveaway/${giveawayToken}/participation`, {
+      credentials: "include",
+      headers: {
+        accept: "application/json, text/plain, */*",
+        "accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+        "content-type": "application/json;charset=UTF-8",
+        "x-amzn-csrf": csrfToken
+      },
+      referrer: botFrame.contentWindow.location.href,
+      referrerPolicy: "no-referrer-when-downgrade",
+      body: null,
+      method: "GET",
+      mode: "cors"
+    })
+      .then(res => res.json())
+      .then(data => {
+        addToHistory(botFrame.contentWindow.location.href)
+        let lifetimeEntries = GM_getValue("lifetimeEntries")
+        lifetimeEntries += 1
+        GM_setValue("lifetimeEntries", lifetimeEntries)
+        currentSessionEntries = GM_getValue("currentSessionEntries")
+        currentSessionEntries += 1
+        GM_setValue("currentSessionEntries", currentSessionEntries)
+
+        console.log(data.success.status)
+        if (data.success.status !== "notParticipated") {
+          // console.log(data.success.status)
+          nextGiveaway()
+          return
+        }
+        if (data.success.nextUserAction) {
+          // console.log("NEXT")
+          fetch(`https://www.amazon.com/gax/-/pex/api/v1/giveaway/${giveawayToken}/participation/nextAction`, {
+            credentials: "include",
+            headers: {
+              accept: "application/json, text/plain, */*",
+              "accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+              "content-type": "application/json;charset=UTF-8",
+              "x-amzn-csrf": csrfToken
+            },
+            referrer: botFrame.contentWindow.location.href,
+            referrerPolicy: "no-referrer-when-downgrade",
+            body: JSON.stringify({ submission: { name: data.success.nextUserAction.name } }),
+            method: "PUT",
+            mode: "cors"
+          })
+            .then(res => res.json())
+            .then(data => {
+              let encryptedState = { encryptedState: data.success.encryptedState }
+
+              fetch(`https://www.amazon.com/gax/-/pex/api/v1/giveaway/${giveawayToken}/participation`, {
+                credentials: "include",
+                headers: {
+                  accept: "application/json, text/plain, */*",
+                  "accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+                  "content-type": "application/json;charset=UTF-8",
+                  "x-amzn-csrf": csrfToken
+                },
+                referrer: botFrame.contentWindow.location.href,
+                referrerPolicy: "no-referrer-when-downgrade",
+                body: `{"encryptedState":"${data.success.encryptedState}"}`,
+                method: "POST",
+                mode: "cors"
+              })
+                .then(res => res.json())
+                .then(data => {
+                  console.log(data.success.status)
+                  if (data.success.status !== "won") {
+                    nextGiveaway()
+                  }
+                })
+                .catch(err => {
+                  nextGiveaway()
+                  // console.log(err)
+                })
+            })
+        } else {
+          fetch(`https://www.amazon.com/gax/-/pex/api/v1/giveaway/${giveawayToken}/participation`, {
+            credentials: "include",
+            headers: {
+              accept: "application/json, text/plain, */*",
+              "accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+              "content-type": "application/json;charset=UTF-8",
+              "x-amzn-csrf": csrfToken
+            },
+            referrer: botFrame.contentWindow.location.href,
+            referrerPolicy: "no-referrer-when-downgrade",
+            body: JSON.stringify({}),
+            method: "POST",
+            mode: "cors"
+          })
+            .then(res => res.json())
+            .then(data => {
+              // console.log(data)
+              console.log(data.success.status)
+              if (data.success.status !== "won") {
+                nextGiveaway()
+              }
+            })
+            .catch(err => {
+              nextGiveaway()
+              // console.log(err)
+            })
+        }
+      })
   }
 })()
