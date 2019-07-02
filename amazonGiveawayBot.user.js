@@ -14,12 +14,14 @@
 // @grant        GM_addStyle
 // @grant        unsafeWindow
 // @run-at       document-start
+// @require      file:///Users/tygooch/Projects/amazon-giveaway-automator/amazonGiveawayBot.user.js
 // ==/UserScript==
 
 ;(function() {
   var giveaways
+  var historyKey
   var botFrame
-
+  console.log(GM_getValue("winHistory"))
   // GM_addStyle("header { display: none !important; }")
 
   // hide navbar in iframe
@@ -35,19 +37,24 @@
     )
     GM_addStyle(".spinner { transform: scale(2); margin-top: 0 !important; margin-bottom: 0 !important;}")
     GM_addStyle(".a-divider-normal {display: none;}")
+    // GM_addStyle(
+    //   ".input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active  {-webkit-box-shadow: 0 0 0 30px white inset !important;}"
+    // )
   }
   if (window.location.href.includes("/ga/giveaways/bot")) {
+    GM_setValue("initialized", false)
     window.addEventListener("load", init, { capture: false, once: true })
   } else {
   }
-  // GM_setValue("initialized", false)
 
   async function init() {
+    // GM_setValue("initialized", false)
     if (GM_getValue("initialized")) {
       document.querySelector("#ga-subscribe a").href = "/ga/giveaways/bot"
       document.querySelector("#ga-subscribe a").innerText = "Go to bot"
       return
     }
+
     GM_setValue("running", false)
     GM_setValue("initialized", true)
     window.onbeforeunload = () => {
@@ -62,9 +69,9 @@
     if (!GM_getValue("totalWins")) {
       GM_setValue("totalWins", 0)
     }
-    if (!GM_getValue("mainPageUrl")) {
-      GM_setValue("mainPageUrl", "https://www.amazon.com/ga/giveaways/?pageId=1")
-    }
+    // if (!GM_getValue("mainPageUrl")) {
+    //   GM_setValue("mainPageUrl", "https://www.amazon.com/ga/giveaways/?pageId=1")
+    // }
 
     var controlsTemplate =
       '<div id="container"\n' +
@@ -80,10 +87,14 @@
       '  <div id="botFrameContainer" style="background-color: #fff; width: 600px; height: 287.5px; padding: 0px;"></div>\n' +
       '  <div id="botOptions" style=" background-color: #fff; width: 100%; display: flex; padding: 16px; border-top: 1px solid rgba(34,36,38,.15); text-align: left; justify-content: space-between;">\n' +
       '	    <div style="">\n' +
-      '      <div style="padding-bottom: 10px;"><label for="twoCaptchaKey">2Captcha API Key</label><input id="twoCaptchaKey" style="width: 250px;" name="twoCaptchaKey" type="text" placeholdertype="Enter your key here"></input></div>\n' +
-      '       <div><input id="turboMode" name="turboMode" type="checkbox"></input><span> Enable Turbo Mode (Experimental)</span></div>\n' +
+      // '      <input type="password" name="whatever" autocomplete="new-password" />\n' +
+      // '      <input  autocomplete="off" style="display: none;" name="hiddenPassword" type="password" placeholdertype="Amazon Password"></input>\n' +
+      '      <div style="padding-bottom: 10px;"><label for="amazonEmail">Amazon Email</label><input id="amazonEmail" autocomplete="off" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important;" name="amazonEmail" type="text" placeholdertype="Amazon Email"></input></div>\n' +
+      '      <div style="padding-bottom: 10px;"><label for="amazonPassword">Amazon Passsword</label><input id="amazonPassword" autocomplete="off" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important;" name="amazonPassword" type="password" placeholdertype="Amazon Password"></input></div>\n' +
+      // '       <div><input id="turboMode" name="turboMode" type="checkbox"></input><span> Enable Turbo Mode (Experimental)</span></div>\n' +
       "	  	</div>\n" +
       '	    <div style="">\n' +
+      '      <div style="padding-bottom: 10px;"><label for="twoCaptchaKey">2Captcha API Key</label><input id="twoCaptchaKey" style="width: 250px;" name="twoCaptchaKey" type="text" placeholdertype="Enter your key here"></input></div>\n' +
       '	  	  <label id="">Filtered Giveaways</label>\n' +
       '	  	  <div style="padding-left: 7px;">\n' +
       '       <div><input id="disableKindle" name="disableKindle" type="checkbox"></input><span> Kindle Books</span></div>\n' +
@@ -125,7 +136,8 @@
     botFrame.style.transform = "scale(0.5)"
     botFrame.style.transformOrigin = "top left"
     botFrame.style.border = "0"
-    botFrame.src = GM_getValue("mainPageUrl")
+    // botFrame.src = GM_getValue("mainPageUrl")
+    botFrame.src = "https://www.amazon.com/ga/giveaways"
     document.querySelector("#botFrameContainer").appendChild(botFrame)
 
     document.querySelector("#run").style.display = GM_getValue("running") ? "none" : "block"
@@ -133,7 +145,7 @@
     document.querySelector("#disableVideo").checked = GM_getValue("disableVideo")
     document.querySelector("#disableFollow").checked = GM_getValue("disableFollow")
     document.querySelector("#disableKindle").checked = GM_getValue("disableKindle")
-    document.querySelector("#turboMode").checked = GM_getValue("turboMode")
+    // document.querySelector("#turboMode").checked = GM_getValue("turboMode")
     if (GM_getValue("twoCaptchaKey")) {
       document.querySelector("#twoCaptchaKey").value = GM_getValue("twoCaptchaKey")
     }
@@ -165,16 +177,19 @@
       document.querySelector("#currentSessionEntries").style.visibility = "visible"
       document.querySelector("#botOptions").style.display = "none"
 
-      main()
+      botFrame.contentWindow.location.href = "https://www.amazon.com/gp/navigation/redirector.html/ref=sign-in-redirect"
+      // main()
 
       setInterval(function() {
+        historyKey = document.querySelector("#amazonEmail").value + "history"
+
         if (document.querySelector("#twoCaptchaKey").value.length > 0) {
           GM_setValue("twoCaptchaKey", document.querySelector("#twoCaptchaKey").value)
         }
         GM_setValue("disableKindle", document.querySelector("#disableKindle").checked)
         GM_setValue("disableVideo", document.querySelector("#disableVideo").checked)
         GM_setValue("disableFollow", document.querySelector("#disableFollow").checked)
-        GM_setValue("turboMode", document.querySelector("#turboMode").checked)
+        // GM_setValue("turboMode", document.querySelector("#turboMode").checked)
 
         document.querySelector("#currentSessionEntriesValue").innerHTML = GM_getValue("currentSessionEntries")
         document.querySelector("#lifetimeEntriesValue").innerHTML = GM_getValue("lifetimeEntries")
@@ -208,78 +223,154 @@
 
   async function doSignIn() {
     console.log("Sign In")
-    let clickSignin = setInterval(() => {
+    let signIn = setInterval(() => {
       if (!GM_getValue("running")) {
-        clearInterval(clickSignin)
-      } else if (getEl("#captchacharacters")) {
-        clearInterval(clickSignin)
+        clearInterval(signIn)
+        // } else if (getEl("#cvf-account-switcher-add-accounts-link")) {
+        //   clearInterval(signIn)
+        //   getEl("#cvf-account-switcher-add-accounts-link").click()
+      } else if (getEl("#auth-captcha-image") || getEl("#captchacharacters")) {
+        clearInterval(signIn)
         solveCaptcha()
-      } else if (getEl(".cvf-account-switcher-profile-details")) {
-        clearInterval(clickSignin)
-        getEl(".cvf-account-switcher-profile-details").click()
-      } else if (getEl(".cvf-account-switcher-profile-details-after-account-removed")) {
-        clearInterval(clickSignin)
-        getEl(".cvf-account-switcher-profile-details-after-account-removed").click()
-      } else if (getEl("#signInSubmit")) {
-        clearInterval(clickSignin)
-        getEl("#signInSubmit").click()
-      }
-    }, 100)
-  }
-
-  async function getGiveaways() {
-    var setGiveaways = setInterval(() => {
-      // go to first page if no giveaways are shown
-      if (getEl("#giveaway-listing-page-no-giveaway")) {
-        clearInterval(setGiveaways)
-        botFrame.contentWindow.location.href = "https://www.amazon.com/ga/giveaways/?pageId=1"
-      }
-      var giveawayItems = botFrame.contentDocument.querySelectorAll(".a-link-normal.item-link")
-      if (giveawayItems.length > 0) {
-        var allowedGiveaways = []
-        giveawayItems.forEach(item => {
-          if (
-            !(
-              (GM_getValue("disableKindle") && item.innerText.includes("Kindle")) ||
-              (GM_getValue("disableVideo") && item.innerText.includes("Watch a short video")) ||
-              (GM_getValue("disableFollow") && item.innerText.includes("Follow"))
-            )
-          ) {
-            let visited = GM_getValue("visitedLinks")
-            if (!visited || !visited.includes(item.href.split("?")[0].replace("https://www.amazon.com/ga/p/", ""))) {
-              // allowedGiveaways.push(item.href.split("?")[0])
-              allowedGiveaways.push(item.href)
-            }
+        // } else if (getEl("#cvf-account-switcher-add-accounts-link")) {
+        //   clearInterval(signIn)
+        //   getEl("#cvf-account-switcher-add-accounts-link").click()
+      } else if (getEl("#ap_password")) {
+        if (
+          getEl(".a-size-base.a-color-tertiary.auth-text-truncate") &&
+          !getEl(".a-size-base.a-color-tertiary.auth-text-truncate").textContent.includes(document.querySelector("#amazonEmail").value)
+        ) {
+          getEl("#ap_switch_account_link").click()
+          // } else {
+          // }
+        } else {
+          clearInterval(signIn)
+          if (getEl("#ap_email")) {
+            getEl("#ap_email").value = document.querySelector("#amazonEmail").value
+          }
+          getEl("#ap_password").value = document.querySelector("#amazonPassword").value
+          getEl("#signInSubmit").click()
+        }
+      } else if (getEl(".cvf-account-switcher-spacing-base a")) {
+        clearInterval(signIn)
+        let accountAdded = false
+        botFrame.contentDocument.querySelectorAll(".cvf-account-switcher-spacing-base a").forEach(el => {
+          console.log(el.textContent)
+          if (el.textContent.includes(document.querySelector("#amazonEmail").value)) {
+            accountAdded = true
+            el.click()
+          } else if (el.textContent.includes("Add account") && !accountAdded) {
+            el.click()
           }
         })
+        // setTimeout(() => {
+        // }, 1000)
+      }
+      // } else if (getEl(".cvf-account-switcher-profile-details")) {
+      //   clearInterval(clickSignin)
+      //   getEl(".cvf-account-switcher-profile-details").click()
+      // } else if (getEl(".cvf-account-switcher-profile-details-after-account-removed")) {
+      //   clearInterval(clickSignin)
+      //   getEl(".cvf-account-switcher-profile-details-after-account-removed").click()
+      // } else if (getEl("#signInSubmit")) {
+      //   clearInterval(clickSignin)
+      //   getEl("#signInSubmit").click()
+      // }
+    }, 1000)
+  }
+
+  var offset = 0
+
+  async function getGiveaways() {
+    let giveawayCount = ""
+    var allowedGiveaways = []
+    // while (offset < totalGiveaways / 24) {
+    fetch("https://www.amazon.com/gax/-/lex/api/v1/giveaways?offset=" + offset * 24, {
+      credentials: "include",
+      headers: {
+        accept: "application/json, text/plain, */*",
+        "accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+        "x-amzn-csrf": "86ZKiI1hVrTnAFCnPjmKcszcZfoj3D"
+      },
+      referrer: botFrame.contentWindow.location.href,
+      referrerPolicy: "no-referrer-when-downgrade",
+      body: null,
+      method: "GET",
+      mode: "cors"
+    })
+      .then(res => res.json())
+      .then(data => {
+        let visited = GM_getValue(historyKey)
+        data.giveaways.forEach(item => {
+          if (!visited || !visited.includes(item.id)) {
+            allowedGiveaways.push("https://www.amazon.com/ga/p/" + item.id)
+          }
+        })
+        console.log(data)
+        offset += 1
         if (allowedGiveaways.length > 0) {
-          GM_setValue("maxIdx", allowedGiveaways.length - 1)
           giveaways = allowedGiveaways
-          allowedGiveaways.forEach((url, idx) => {
-            GM_setValue(`giveaway-${idx}`, url)
-          })
           nextGiveaway()
         } else {
           console.log("NONE")
-          goToNextPage()
+          getGiveaways()
         }
-        clearInterval(setGiveaways)
-      }
-    }, 100)
+      })
+    // }
+
+    // var setGiveaways = setInterval(() => {
+    //   // go to first page if no giveaways are shown
+    //   if (getEl("#giveaway-listing-page-no-giveaway")) {
+    //     clearInterval(setGiveaways)
+    //     botFrame.contentWindow.location.href = "https://www.amazon.com/ga/giveaways/?pageId=1"
+    //   }
+    //   var giveawayItems = botFrame.contentDocument.querySelectorAll(".a-link-normal.item-link")
+    //   if (giveawayItems.length > 0) {
+    //     var allowedGiveaways = []
+    //     giveawayItems.forEach(item => {
+    //       if (
+    //         !(
+    //           (GM_getValue("disableKindle") && item.innerText.includes("Kindle")) ||
+    //           (GM_getValue("disableVideo") && item.innerText.includes("Watch a short video")) ||
+    //           (GM_getValue("disableFollow") && item.innerText.includes("Follow"))
+    //         )
+    //       ) {
+    //         let visited = GM_getValue(historyKey)
+    //         if (!visited || !visited.includes(item.href.split("?")[0].replace("https://www.amazon.com/ga/p/", ""))) {
+    //           // allowedGiveaways.push(item.href.split("?")[0])
+    //           allowedGiveaways.push(item.href)
+    //         }
+    //       }
+    //     })
+    //     if (allowedGiveaways.length > 0) {
+    //       GM_setValue("maxIdx", allowedGiveaways.length - 1)
+    //       giveaways = allowedGiveaways
+    //       allowedGiveaways.forEach((url, idx) => {
+    //         GM_setValue(`giveaway-${idx}`, url)
+    //       })
+    //       nextGiveaway()
+    //     } else {
+    //       console.log("NONE")
+    //       goToNextPage()
+    //     }
+    //     clearInterval(setGiveaways)
+    //   }
+    // }, 100)
   }
 
   function addToHistory(url) {
-    let visited = GM_getValue("visitedLinks")
+    // let historyKey = document.querySelector("#amazonEmail").value + "history"
+    let visited = GM_getValue(historyKey)
     if (!visited) {
-      GM_setValue("visitedLinks", "|" + url.replace("https://www.amazon.com/ga/p/", ""))
+      GM_setValue(historyKey, "|" + url.replace("https://www.amazon.com/ga/p/", ""))
     } else {
-      GM_setValue("visitedLinks", visited + "|" + url.replace("https://www.amazon.com/ga/p/", ""))
+      GM_setValue(historyKey, visited + "|" + url.replace("https://www.amazon.com/ga/p/", ""))
     }
-    visited = GM_getValue("visitedLinks")
-    if (visited.length > 27500) {
-      visited = visited.substr(visited.length - 27500)
+    visited = GM_getValue(historyKey)
+    if (visited.length > 4000000) {
+      visited = visited.substr(visited.length - 4000000)
     }
-    GM_setValue("visitedLinks", visited)
+    GM_setValue(historyKey, visited)
   }
 
   async function nextGiveaway() {
@@ -287,187 +378,188 @@
       let next = giveaways.pop()
       botFrame.contentWindow.location.href = next
     } else {
-      goToNextPage()
+      getGiveaways()
     }
   }
 
-  async function enterGiveaway() {
-    if (document.getElementsByName("ClaimMyPrize").length > 0) {
-      document.getElementsByName("ClaimMyPrize")[0].click()
-    }
-    // if giveaway has video requirement, watch the video then enter
-    let video = getEl(".video")
-    if (video || getEl("#giveaway-youtube-video-watch-text") || getEl("#airy-container")) {
-      // setInterval(() => {
-      // }, 1000)
-      if (GM_getValue("disableVideo")) {
-        nextGiveaway()
-      }
-      var continueButton
-      if (getEl(".amazon-video")) {
-        video.play()
-        video.muted = true
-        continueButton = getEl(".amazon-video-continue-button")
-      } else if (video) {
-        getEl(".youtube-video div").click()
-        continueButton = getEl(".youtube-continue-button")
-      } else if (getEl("#airy-container")) {
-        var playAiryVideo = setInterval(() => {
-          if (getEl(".airy-play-hint")) {
-            clearInterval(playAiryVideo)
-            getEl(".airy-play-hint").click()
-            getEl(".airy-audio-toggle").click()
-            continueButton = getEl("#enter-video-button")
-          }
-        }, 100)
-      } else {
-        continueButton = getEl("#enter-youtube-video-button")
-      }
-      var waitForEntry = setInterval(() => {
-        if (!continueButton.classList.contains("a-button-disabled")) {
-          clearInterval(waitForEntry)
-          if (continueButton.id.includes("-video-button")) {
-            continueButton.querySelector("input").click()
-          } else {
-            continueButton.click()
-          }
-          handleSubmit()
-        }
-      }, 1000)
-    } else {
-      if (getEl(".follow-author-continue-button") || getEl(".qa-amazon-follow-button")) {
-        if (GM_getValue("disableFollow")) {
-          nextGiveaway()
-        } else {
-          if (getEl(".qa-amazon-follow-button")) {
-            getEl(".qa-amazon-follow-button").click()
-          } else {
-            getEl(".follow-author-continue-button").click()
-          }
-        }
-      }
-      var submitEntry = setInterval(() => {
-        var boxToClick = getEl("#box_click_target")
-        if (!boxToClick) {
-          boxToClick = getEl(".box-click-area")
-        }
-        if (boxToClick) {
-          boxToClick.click()
-          clearInterval(submitEntry)
-          handleSubmit()
-        }
-      }, 100)
-    }
-  }
+  // async function enterGiveaway() {
+  //   if (document.getElementsByName("ClaimMyPrize").length > 0) {
+  //     document.getElementsByName("ClaimMyPrize")[0].click()
+  //   }
+  //   // if giveaway has video requirement, watch the video then enter
+  //   let video = getEl(".video")
+  //   if (video || getEl("#giveaway-youtube-video-watch-text") || getEl("#airy-container")) {
+  //     // setInterval(() => {
+  //     // }, 1000)
+  //     if (GM_getValue("disableVideo")) {
+  //       nextGiveaway()
+  //     }
+  //     var continueButton
+  //     if (getEl(".amazon-video")) {
+  //       video.play()
+  //       video.muted = true
+  //       continueButton = getEl(".amazon-video-continue-button")
+  //     } else if (video) {
+  //       getEl(".youtube-video div").click()
+  //       continueButton = getEl(".youtube-continue-button")
+  //     } else if (getEl("#airy-container")) {
+  //       var playAiryVideo = setInterval(() => {
+  //         if (getEl(".airy-play-hint")) {
+  //           clearInterval(playAiryVideo)
+  //           getEl(".airy-play-hint").click()
+  //           getEl(".airy-audio-toggle").click()
+  //           continueButton = getEl("#enter-video-button")
+  //         }
+  //       }, 100)
+  //     } else {
+  //       continueButton = getEl("#enter-youtube-video-button")
+  //     }
+  //     var waitForEntry = setInterval(() => {
+  //       if (!continueButton.classList.contains("a-button-disabled")) {
+  //         clearInterval(waitForEntry)
+  //         if (continueButton.id.includes("-video-button")) {
+  //           continueButton.querySelector("input").click()
+  //         } else {
+  //           continueButton.click()
+  //         }
+  //         handleSubmit()
+  //       }
+  //     }, 1000)
+  //   } else {
+  //     if (getEl(".follow-author-continue-button") || getEl(".qa-amazon-follow-button")) {
+  //       if (GM_getValue("disableFollow")) {
+  //         nextGiveaway()
+  //       } else {
+  //         if (getEl(".qa-amazon-follow-button")) {
+  //           getEl(".qa-amazon-follow-button").click()
+  //         } else {
+  //           getEl(".follow-author-continue-button").click()
+  //         }
+  //       }
+  //     }
+  //     var submitEntry = setInterval(() => {
+  //       var boxToClick = getEl("#box_click_target")
+  //       if (!boxToClick) {
+  //         boxToClick = getEl(".box-click-area")
+  //       }
+  //       if (boxToClick) {
+  //         boxToClick.click()
+  //         clearInterval(submitEntry)
+  //         handleSubmit()
+  //       }
+  //     }, 100)
+  //   }
+  // }
 
   // check page until results show up then continue to next giveaway in queue if not a winner
-  async function handleSubmit() {
-    // sometimes the first try doesn't work. If no results are displayed after 10 seconds try again.
-    var tryAgain = setTimeout(() => {
-      botFrame.contentWindow.reload()
-    }, 10000)
+  // async function handleSubmit() {
+  //   // sometimes the first try doesn't work. If no results are displayed after 10 seconds try again.
+  //   var tryAgain = setTimeout(() => {
+  //     botFrame.contentWindow.reload()
+  //   }, 10000)
 
-    var getResults = setInterval(() => {
-      if (
-        document.getElementsByName("ClaimMyPrize").length > 0 ||
-        getEl(".participation-post-entry-container") ||
-        getEl(".add-to-cart-button") ||
-        getEl("#giveaway-addToCart-btn") ||
-        getEl("#free-sample-download-btn")
-      ) {
-        clearTimeout(tryAgain)
-        clearInterval(getResults)
-        if (
-          document.getElementsByName("ClaimMyPrize").length > 0 ||
-          (getEl("#title") && getEl("#title").innerHTML.includes("won!")) ||
-          (getEl(".prize-title") && getEl(".prize-title").innerHTML.includes("won!")) ||
-          (getEl(".prize-header-container") && getEl(".prize-header-container").innerHTML.includes("won!"))
-        ) {
-          var wins = GM_getValue("totalWins")
-          GM_setValue("totalWins", wins + 1)
-          if (getEl("#continue-button")) {
-            getEl("#continue-button input").click()
-          }
-          if (getEl(".a-button-input")) {
-            getEl(".a-button-input").click()
-          }
-          if (getEl("#lu_co_ship_box")) {
-            getEl("#lu_co_ship_box").click()
-          }
-          if (document.getElementsByName("ClaimMyPrize").length > 0) {
-            document.getElementsByName("ClaimMyPrize")[0].click()
-          }
-          if (botFrame.contentDocument.querySelectorAll(".shipAddressId input").length > 0) {
-            botFrame.contentDocument
-              .querySelectorAll(".shipAddressId input")
-              [botFrame.contentDocument.querySelectorAll(".shipAddressId input").length - 1].click()
-          }
-          if (botFrame.contentDocument.querySelectorAll("input.shipMyPrizeButton").length > 0) {
-            botFrame.contentDocument
-              .querySelectorAll("input.shipMyPrizeButton")
-              [botFrame.contentDocument.querySelectorAll("input.shipMyPrizeButton").length - 1].click()
-          }
-          alert("Winner!")
-          if (GM_getValue("running")) {
-            nextGiveaway()
-          }
-        } else {
-          if (GM_getValue("running")) {
-            nextGiveaway()
-          }
-        }
-        addToHistory(botFrame.contentWindow.location.href)
-        let lifetimeEntries = GM_getValue("lifetimeEntries")
-        lifetimeEntries += 1
-        GM_setValue("lifetimeEntries", lifetimeEntries)
-        currentSessionEntries = GM_getValue("currentSessionEntries")
-        currentSessionEntries += 1
-        GM_setValue("currentSessionEntries", currentSessionEntries)
-      }
-    }, 100)
-  }
+  //   var getResults = setInterval(() => {
+  //     if (
+  //       document.getElementsByName("ClaimMyPrize").length > 0 ||
+  //       getEl(".participation-post-entry-container") ||
+  //       getEl(".add-to-cart-button") ||
+  //       getEl("#giveaway-addToCart-btn") ||
+  //       getEl("#free-sample-download-btn")
+  //     ) {
+  //       clearTimeout(tryAgain)
+  //       clearInterval(getResults)
+  //       if (
+  //         document.getElementsByName("ClaimMyPrize").length > 0 ||
+  //         (getEl("#title") && getEl("#title").innerHTML.includes("won!")) ||
+  //         (getEl(".prize-title") && getEl(".prize-title").innerHTML.includes("won!")) ||
+  //         (getEl(".prize-header-container") && getEl(".prize-header-container").innerHTML.includes("won!"))
+  //       ) {
+  //         var wins = GM_getValue("totalWins")
+  //         GM_setValue("totalWins", wins + 1)
+  //         if (getEl("#continue-button")) {
+  //           getEl("#continue-button input").click()
+  //         }
+  //         if (getEl(".a-button-input")) {
+  //           getEl(".a-button-input").click()
+  //         }
+  //         if (getEl("#lu_co_ship_box")) {
+  //           getEl("#lu_co_ship_box").click()
+  //         }
+  //         if (document.getElementsByName("ClaimMyPrize").length > 0) {
+  //           document.getElementsByName("ClaimMyPrize")[0].click()
+  //         }
+  //         if (botFrame.contentDocument.querySelectorAll(".shipAddressId input").length > 0) {
+  //           botFrame.contentDocument
+  //             .querySelectorAll(".shipAddressId input")
+  //             [botFrame.contentDocument.querySelectorAll(".shipAddressId input").length - 1].click()
+  //         }
+  //         if (botFrame.contentDocument.querySelectorAll("input.shipMyPrizeButton").length > 0) {
+  //           botFrame.contentDocument
+  //             .querySelectorAll("input.shipMyPrizeButton")
+  //             [botFrame.contentDocument.querySelectorAll("input.shipMyPrizeButton").length - 1].click()
+  //         }
+  //         if (GM_getValue("running")) {
+  //           nextGiveaway()
+  //         }
+  //       } else {
+  //         if (GM_getValue("running")) {
+  //           nextGiveaway()
+  //         }
+  //       }
+  //       addToHistory(botFrame.contentWindow.location.href)
+  //       let lifetimeEntries = GM_getValue("lifetimeEntries")
+  //       lifetimeEntries += 1
+  //       GM_setValue("lifetimeEntries", lifetimeEntries)
+  //       currentSessionEntries = GM_getValue("currentSessionEntries")
+  //       currentSessionEntries += 1
+  //       GM_setValue("currentSessionEntries", currentSessionEntries)
+  //     }
+  //   }, 100)
+  // }
 
   async function main() {
     var isSignIn = botFrame.contentWindow.location.href.includes("https://www.amazon.com/ap/signin") || getEl(".cvf-account-switcher")
-    var isMainPage = botFrame.contentWindow.location.href.includes("?pageId=")
+    // var isMainPage = botFrame.contentWindow.location.href.includes("?pageId=")
     var isGiveaway = botFrame.contentWindow.location.href.includes("/ga/p")
     if (GM_getValue("running")) {
       // submit login info if redirected to signin page
       if (isSignIn) {
         doSignIn()
-      } else if (isMainPage) {
-        GM_setValue("mainPageUrl", botFrame.contentWindow.location.href)
+      } else if (getEl(".participation-need-login a")) {
+        getEl(".participation-need-login a").click()
+      } else if (!isGiveaway) {
+        // GM_setValue("mainPageUrl", botFrame.contentWindow.location.href)
         getGiveaways()
       } else if (isGiveaway) {
-        if (GM_getValue("turboMode")) {
-          lazyEnter()
-        } else {
-          var waitForTitle = setInterval(() => {
-            if (getEl(".prize-title") || getEl(".prize-header-container") || getEl(".a-spacing-small.a-size-extra-large")) {
-              clearInterval(waitForTitle)
-              // if giveaway has already been entered, continue on to next giveaway in queue
-              if (
-                (!(getEl("#title") && getEl("#title").innerHTML.includes("won!")) && getEl(".a-spacing-small.a-size-extra-large")) ||
-                (getEl(".prize-title") && getEl(".prize-title").innerText.includes("didn't win")) ||
-                (getEl(".prize-header-container") && getEl(".prize-header-container").innerText.includes("didn't win"))
-              ) {
-                console.log("already entered")
-                addToHistory(botFrame.contentWindow.location.href)
-                nextGiveaway()
-              }
-              // use 2captcha to solve captchas if present
-              else if (getEl("#giveaway-captcha-container")) {
-                solveCaptcha()
-              }
-              // otherwise enter giveaway
-              else if (getEl(".participation-need-action") || getEl(".participation-action-item")) {
-                enterGiveaway()
-              } else if (getEl(".participation-need-login")) {
-                getEl(".a-button-inner a").click()
-              }
-            }
-          }, 100)
-        }
+        // if (GM_getValue("turboMode")) {
+        lazyEnter()
+        // } else {
+        //   var waitForTitle = setInterval(() => {
+        //     if (getEl(".prize-title") || getEl(".prize-header-container") || getEl(".a-spacing-small.a-size-extra-large")) {
+        //       clearInterval(waitForTitle)
+        //       // if giveaway has already been entered, continue on to next giveaway in queue
+        //       if (
+        //         (!(getEl("#title") && getEl("#title").innerHTML.includes("won!")) && getEl(".a-spacing-small.a-size-extra-large")) ||
+        //         (getEl(".prize-title") && getEl(".prize-title").innerText.includes("didn't win")) ||
+        //         (getEl(".prize-header-container") && getEl(".prize-header-container").innerText.includes("didn't win"))
+        //       ) {
+        //         console.log("already entered")
+        //         addToHistory(botFrame.contentWindow.location.href)
+        //         nextGiveaway()
+        //       }
+        //       // use 2captcha to solve captchas if present
+        //       else if (getEl("#giveaway-captcha-container")) {
+        //         solveCaptcha()
+        //       }
+        //       // otherwise enter giveaway
+        //       else if (getEl(".participation-need-action") || getEl(".participation-action-item")) {
+        //         enterGiveaway()
+        //       } else if (getEl(".participation-need-login")) {
+        //         getEl(".a-button-inner a").click()
+        //       }
+        //     }
+        //   }, 100)
+        // }
       }
     }
   }
@@ -477,8 +569,8 @@
       alert("No 2Captcha API key was provided. Captcha cannot be solved without a key.")
     } else {
       let captchaImgUrl
-      if (getEl("#auth-captcha-img")) {
-        captchaImgUrl = getEl("#auth-captcha-img").src
+      if (getEl("#auth-captcha-image")) {
+        captchaImgUrl = getEl("#auth-captcha-image").src
       } else if (getEl(".a-text-center img")) {
         captchaImgUrl = getEl(".a-text-center img").src
       }
@@ -524,6 +616,12 @@
                 } else if (getEl("#captchacharacters")) {
                   getEl("#captchacharacters").value = captchaAnswer.request
                   getEl(".a-button-inner button").click()
+                } else if (getEl("#auth-captcha-guess")) {
+                  if (getEl("#ap_password")) {
+                    getEl("#ap_password").value = document.querySelector("#amazonPassword").value
+                    getEl("#auth-captcha-guess").value = captchaAnswer.request
+                    getEl("#signInSubmit").click()
+                  }
                 }
                 // check for validity, try again if invalid
                 setTimeout(() => {
@@ -580,19 +678,99 @@
   }
 
   function clearHistory() {
-    GM_setValue("mainPageUrl", "https://www.amazon.com/ga/giveaways/?pageId=1")
-    GM_setValue("visitedLinks", "|")
+    // let historyKey = document.querySelector("#amazonEmail").value + "history"
+    // GM_setValue("mainPageUrl", "https://www.amazon.com/ga/giveaways/?pageId=1")
+    GM_setValue(historyKey, "|")
   }
 
   function getEl(selector) {
     return botFrame.contentDocument.querySelector(selector)
   }
 
-  function goToNextPage() {
-    let nextPage = GM_getValue("mainPageUrl").split("pageId=")
-    nextPage[nextPage.length - 1] = parseInt(nextPage[nextPage.length - 1]) + 1
-    nextPage = nextPage.join("pageId=")
-    botFrame.contentWindow.location.href = nextPage
+  // function goToNextPage() {
+  //   let nextPage = GM_getValue("mainPageUrl").split("pageId=")
+  //   nextPage[nextPage.length - 1] = parseInt(nextPage[nextPage.length - 1]) + 1
+  //   nextPage = nextPage.join("pageId=")
+  //   botFrame.contentWindow.location.href = nextPage
+  // }
+
+  function claimWin(giveawayId) {
+    var wins = GM_getValue("totalWins")
+    GM_setValue("totalWins", wins + 1)
+
+    var boxToClick = getEl("#box_click_target")
+    if (!boxToClick) {
+      boxToClick = getEl(".box-click-area")
+    }
+    if (boxToClick) {
+      boxToClick.click()
+      // handleSubmit()
+    } else {
+      if (getEl(".follow-author-continue-button") || getEl(".qa-amazon-follow-button")) {
+        if (GM_getValue("disableFollow")) {
+          nextGiveaway()
+        } else {
+          if (getEl(".qa-amazon-follow-button")) {
+            getEl(".qa-amazon-follow-button").click()
+          } else {
+            getEl(".follow-author-continue-button").click()
+          }
+        }
+      }
+    }
+
+    let winHistory = GM_getValue("winHistory")
+    if (!winHistory) {
+      GM_setValue("winHistory", "|" + giveawayId)
+    } else {
+      GM_setValue("winHistory", winHistory + "|" + giveawayId)
+    }
+    winHistory = GM_getValue("winHistory")
+    if (winHistory.length > 4000000) {
+      winHistory = winHistory.substr(winHistory.length - 4000000)
+    }
+    GM_setValue("winHistory", winHistory)
+
+    setInterval(() => {
+      if (getEl(".shipAddressId input")) {
+        getEl(".shipAddressId input").click()
+      }
+      if (getEl("input.shipMyPrizeButton")) {
+        getEl("input.shipMyPrizeButton").click()
+      }
+      if (getEl("#continue-button")) {
+        getEl("#continue-button input").click()
+      }
+      if (getEl(".a-button-input")) {
+        getEl(".a-button-input").click()
+      }
+      if (getEl("#lu_co_ship_box")) {
+        getEl("#lu_co_ship_box").click()
+      }
+      if (document.getElementsByName("ClaimMyPrize").length > 0) {
+        document.getElementsByName("ClaimMyPrize")[0].click()
+      }
+      // if (botFrame.contentDocument.querySelectorAll(".shipAddressId input").length > 0) {
+      //   botFrame.contentDocument.querySelectorAll(".shipAddressId input").click()
+      // }
+      if (botFrame.contentDocument.querySelectorAll("input.shipMyPrizeButton").length > 0) {
+        botFrame.contentDocument
+          .querySelectorAll("input.shipMyPrizeButton")
+          [botFrame.contentDocument.querySelectorAll("input.shipMyPrizeButton").length - 1].click()
+      }
+    }, 1000)
+    setTimeout(() => {
+      nextGiveaway()
+    }, 10000)
+  }
+
+  function recordEntry() {
+    let lifetimeEntries = GM_getValue("lifetimeEntries")
+    lifetimeEntries += 1
+    GM_setValue("lifetimeEntries", lifetimeEntries)
+    currentSessionEntries = GM_getValue("currentSessionEntries")
+    currentSessionEntries += 1
+    GM_setValue("currentSessionEntries", currentSessionEntries)
   }
 
   // Experimental functionality to enter giveaways without interacting with page elements.
@@ -619,19 +797,13 @@
       .then(res => res.json())
       .then(data => {
         addToHistory(botFrame.contentWindow.location.href)
-        let lifetimeEntries = GM_getValue("lifetimeEntries")
-        lifetimeEntries += 1
-        GM_setValue("lifetimeEntries", lifetimeEntries)
-        currentSessionEntries = GM_getValue("currentSessionEntries")
-        currentSessionEntries += 1
-        GM_setValue("currentSessionEntries", currentSessionEntries)
-
         console.log(data.success.status)
         if (data.success.status !== "notParticipated") {
           // console.log(data.success.status)
           nextGiveaway()
           return
         }
+
         if (data.success.nextUserAction) {
           // console.log("NEXT")
           fetch(`https://www.amazon.com/gax/-/pex/api/v1/giveaway/${giveawayToken}/participation/nextAction`, {
@@ -669,11 +841,15 @@
                 .then(res => res.json())
                 .then(data => {
                   console.log(data.success.status)
-                  if (data.success.status !== "won") {
+                  recordEntry()
+                  if (data.success.status !== "won" && data.success.status !== "lucky") {
                     nextGiveaway()
+                  } else {
+                    claimWin(giveawayToken)
                   }
                 })
                 .catch(err => {
+                  console.log(err)
                   nextGiveaway()
                   // console.log(err)
                 })
@@ -695,17 +871,30 @@
           })
             .then(res => res.json())
             .then(data => {
-              // console.log(data)
               console.log(data.success.status)
-              if (data.success.status !== "won") {
+              recordEntry()
+              if (data.success.status !== "won" && data.success.status !== "lucky") {
                 nextGiveaway()
+              } else {
+                claimWin(giveawayToken)
               }
             })
             .catch(err => {
+              console.log(err)
               nextGiveaway()
-              // console.log(err)
             })
         }
+      })
+      .catch(err => {
+        setTimeout(() => {
+          console.log(err)
+          console.log(getEl(".participation-need-login a"))
+          if (getEl(".participation-need-login a")) {
+            getEl(".participation-need-login a").click()
+          } else {
+            nextGiveaway()
+          }
+        }, 1000)
       })
   }
 })()
