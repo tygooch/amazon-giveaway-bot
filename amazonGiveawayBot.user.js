@@ -2,7 +2,7 @@
 //
 // ==UserScript==
 // @name         Amazon Giveaway Bot
-// @version      2.1.0
+// @version      2.1.1
 // @author       Ty Gooch
 // @updateURL    https://github.com/TyGooch/amazon-giveaway-bot/raw/master/amazonGiveawayBot.user.js
 // @description  Automates Amazon giveaway entries
@@ -20,8 +20,9 @@
   var giveaways
   var historyKey
   var botFrame
+  var log = []
+  var offset = 0
 
-  // hide navbar in iframe
   if (GM_getValue("initialized")) {
     GM_addStyle(
       "#nav-upnav, header, #giveaway-confetti-header, #giveaway-result-info-bar, #skiplink , .giveaway-footer-container, #navFooter { display: none !important; }"
@@ -40,7 +41,7 @@
   } else {
   }
 
-  async function init() {
+  function init() {
     if (GM_getValue("initialized")) {
       document.querySelector("#ga-subscribe a").href = "/ga/giveaways/bot"
       document.querySelector("#ga-subscribe a").innerText = "Go to bot"
@@ -64,7 +65,7 @@
 
     var controlsTemplate =
       '<div id="container"\n' +
-      "  style=\"font-family: Roboto,\\'Helvetica Neue\\',Helvetica,Arial,sans-serif;position: relative; min-width: 600px; margin: auto auto; color: #212529; background-color: #fff; border: 1px solid transparent; border-radius: .28571429rem; overflow: hidden; z-index: 9999; text-align: left; display: flex; flex-direction: column; justify-content: center;\">\n" +
+      "  style=\"font-family: Roboto,\\'Helvetica Neue\\',Helvetica,Arial,sans-serif;position: relative; min-width: 600px; margin: auto auto; color: #212529; background-color: #fff; border: 1px solid transparent; border-radius: .28571429rem; overflow: none; z-index: 9999; text-align: left; display: flex; flex-direction: column; justify-content: center;\">\n" +
       "  <div>\n" +
       '    <div style="padding: 16px; margin-top: 0; text-align: center;"><img style="width: 200px;  margin-left: auto; margin-right: auto;" src="https://i.ibb.co/xgYpv6T/giveaway-Bot-Logo-Blue.png" /></div>\n' +
       "  </div>\n" +
@@ -87,10 +88,18 @@
       "	  	  </div>\n" +
       "	  	</div>\n" +
       "  </div>\n" +
+      '  <div id="" style="flex: 1; position: flex-end;">\n' +
+      '  <div id="log" style="width: 600px; display: none; flex-direction: column; border-top: 1px solid rgba(34,36,38,.15); background-color: #fff; padding: 5px 16px 0px 16px; text-align: left; overflow: scroll; height: 157px;">\n' +
+      "  </div>\n" +
       '  <div style="margin-top: 5px; border-top: 1px solid rgba(34,36,38,.15); background-color: #fff; display: flex; justify-content: space-between; padding: 16px; text-align: left;">\n' +
-      '  		<button id="clearHistory" style="background-color: #e0e1e2; border: 0; border-radius: .28571429rem; color: rgba(0,0,0,0.6); padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Clear History</button>\n' +
+      '  <div style="display: flex;" >\n' +
+      '  		<button id="clearLog" style="margin-left: 5px; display: none; background-color: #e0e1e2; border: 0; border-radius: .28571429rem; color: rgba(0,0,0,0.6); padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Clear Log</button>\n' +
+      '  		<button id="showLog" style="display: flex; background-color: #e0e1e2; border: 0; border-radius: .28571429rem; color: rgba(0,0,0,0.6); padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Show Log</button>\n' +
+      '  		<button id="showOptions" style="display: none; background-color: #e0e1e2; border: 0; border-radius: .28571429rem; color: rgba(0,0,0,0.6); padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Show Config</button>\n' +
+      "  </div>\n" +
       '  		<button id="run" style="background-color: #2185d0; border: 0; border-radius: .28571429rem; color: #fff; padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Start Bot</button>\n' +
       '  		<button id="stop" style="background-color: #d10919; border: 0; border-radius: .28571429rem; color: #fff;  padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Stop Bot</button>\n' +
+      "  </div>\n" +
       "  </div>\n" +
       "</div>\n"
 
@@ -123,6 +132,17 @@
     botFrame.src = "https://www.amazon.com/ga/giveaways"
     document.querySelector("#botFrameContainer").appendChild(botFrame)
 
+    let logHistory = GM_getValue("logHistory")
+    if (logHistory) {
+      logHistory.split("|").forEach(el => {
+        let node = document.createElement("div")
+        node.innerHTML = el
+        document.querySelector("#log").appendChild(node)
+      })
+
+      logger("")
+    }
+
     document.querySelector("#run").style.display = GM_getValue("running") ? "none" : "block"
     document.querySelector("#stop").style.display = GM_getValue("running") ? "block" : "none"
     document.querySelector("#disableVideo").checked = GM_getValue("disableVideo")
@@ -137,8 +157,15 @@
     document.querySelector("#twoCaptchaKey").style.border = "1px solid #ced4da"
     document.body.style.overflow = "hidden"
 
-    document.querySelector("#clearHistory").onclick = function() {
-      clearHistory()
+    document.querySelector("#showLog").onclick = function() {
+      showLog()
+    }
+    document.querySelector("#showOptions").onclick = function() {
+      showOptions()
+    }
+    document.querySelector("#clearLog").onclick = function() {
+      GM_setValue("logHistory", "|")
+      document.querySelector("#log").innerHTML = ""
     }
 
     document.querySelector("#run").onclick = function() {
@@ -146,18 +173,30 @@
         alert("Amazon email and password required to start the bot.")
         return
       }
+
       GM_setValue("running", true)
       GM_setValue("currentSessionEntries", 0)
+      historyKey = document.querySelector("#amazonEmail").value + "history"
+      logger("Bot started")
 
       document.querySelector("#run").style.display = "none"
       document.querySelector("#stop").style.display = "block"
       document.querySelector("#currentSessionEntries").style.visibility = "visible"
       document.querySelector("#botOptions").style.display = "none"
+      document.querySelector("#showLog").click()
+      if (!GM_getValue("currentAccount") || !GM_getValue("currentAccount").includes(document.querySelector("#amazonEmail").value)) {
+        offset = 0
+        botFrame.contentWindow.location.href = "https://www.amazon.com/gp/navigation/redirector.html/ref=sign-in-redirect"
+      } else {
+        logger(GM_getValue("currentAccount") + " already signed in")
+        main()
+      }
 
-      botFrame.contentWindow.location.href = "https://www.amazon.com/gp/navigation/redirector.html/ref=sign-in-redirect"
-
-      setInterval(function() {
-        historyKey = document.querySelector("#amazonEmail").value + "history"
+      let updateUI = setInterval(function() {
+        if (!GM_getValue("running")) {
+          clearInterval(updateUI)
+          return
+        }
 
         if (document.querySelector("#twoCaptchaKey").value.length > 0) {
           GM_setValue("twoCaptchaKey", document.querySelector("#twoCaptchaKey").value)
@@ -188,16 +227,16 @@
     }
 
     document.querySelector("#stop").onclick = function() {
+      logger("Bot stopped")
+
       GM_setValue("running", false)
       document.querySelector("#currentSessionEntries").style.visibility = "hidden"
       document.querySelector("#stop").style.display = "none"
       document.querySelector("#run").style.display = "block"
-      document.querySelector("#botOptions").style.display = "flex"
     }
   }
 
-  async function doSignIn() {
-    console.log("Sign In")
+  function doSignIn() {
     let signIn = setInterval(() => {
       if (!GM_getValue("running")) {
         clearInterval(signIn)
@@ -206,13 +245,15 @@
         solveCaptcha()
       } else if (getEl("body") && getEl("body").textContent.includes("Send OTP")) {
         clearInterval(signIn)
+        logger("SIGN IN FAILED - NEED OTP")
         document.querySelector("#stop").click()
-        // alert("NEED OTP")
       } else if (getEl("#ap_password")) {
         if (
           getEl(".a-size-base.a-color-tertiary.auth-text-truncate") &&
           !getEl(".a-size-base.a-color-tertiary.auth-text-truncate").textContent.includes(document.querySelector("#amazonEmail").value)
         ) {
+          clearInterval(signIn)
+          logger(GM_getValue("currentAccount") + " signed out")
           getEl("#ap_switch_account_link").click()
         } else {
           clearInterval(signIn)
@@ -221,15 +262,19 @@
           }
           getEl("#ap_password").value = document.querySelector("#amazonPassword").value
           getEl("#signInSubmit").click()
+          logger(document.querySelector("#amazonEmail").value + " signed in")
+          GM_setValue("currentAccount", document.querySelector("#amazonEmail").value)
         }
       } else if (getEl(".cvf-account-switcher-spacing-base a")) {
         clearInterval(signIn)
         let accountAdded = false
-        botFrame.contentDocument.querySelectorAll(".cvf-account-switcher-spacing-base a").forEach(el => {
+        console.log(botFrame.contentDocument.querySelectorAll(".cvf-widget-btn-verify-account-switcher"))
+        botFrame.contentDocument.querySelectorAll(".cvf-widget-btn-verify-account-switcher").forEach(el => {
           if (el.textContent.includes(document.querySelector("#amazonEmail").value)) {
             accountAdded = true
             el.click()
           } else if (el.textContent.includes("Add account") && !accountAdded) {
+            logger("Adding account " + document.querySelector("#amazonEmail").value)
             el.click()
           }
         })
@@ -237,9 +282,7 @@
     }, 1000)
   }
 
-  var offset = 0
-
-  async function getGiveaways() {
+  function getGiveaways() {
     var allowedGiveaways = []
 
     fetch("https://www.amazon.com/gax/-/lex/api/v1/giveaways?offset=" + offset * 24, {
@@ -252,6 +295,9 @@
     })
       .then(res => res.json())
       .then(data => {
+        if (!GM_getValue("running")) {
+          return
+        }
         offset += 1
         let visited = GM_getValue(historyKey)
         data.giveaways.forEach(item => {
@@ -269,15 +315,15 @@
           }
         })
         if (allowedGiveaways.length > 0) {
+          logger(allowedGiveaways.length + " found")
           giveaways = allowedGiveaways
           nextGiveaway()
         } else {
-          console.log("NONE")
           if ((offset + 1) * 24 < data.totalGiveaways) {
             getGiveaways()
           } else {
+            logger("All available giveaways have been entered for this account. Switch accounts or come back later to enter more.", "error")
             document.querySelector("#stop").click()
-            alert("All available giveaways have been entered for this account. Switch accounts or come back later to enter more.")
           }
         }
       })
@@ -291,34 +337,41 @@
       GM_setValue(historyKey, visited + "|" + url.replace("https://www.amazon.com/ga/p/", ""))
     }
     visited = GM_getValue(historyKey)
-    if (visited.length > 4000000) {
-      visited = visited.substr(visited.length - 4000000)
+    if (visited.length > 1000000000) {
+      visited = visited.substr(visited.length - 1000000000)
     }
     GM_setValue(historyKey, visited)
   }
 
-  async function nextGiveaway() {
-    if (giveaways.length > 0) {
+  function nextGiveaway() {
+    if (giveaways && giveaways.length > 0) {
       let next = giveaways.pop()
       botFrame.contentWindow.location.href = next
     } else {
+      logger("Searching for giveaways...")
       getGiveaways()
     }
   }
 
-  async function main() {
+  function main() {
     var isSignIn =
       botFrame.contentWindow.location.href.includes("https://www.amazon.com/ap/signin") ||
       getEl(".cvf-account-switcher") ||
       botFrame.contentWindow.location.href.includes("https://www.amazon.com/ap/cvf")
 
+    var isHomePage = botFrame.contentWindow.location.href.includes("home")
+    var isMainPage = botFrame.contentWindow.location.href.includes("/ga/giveaways")
     var isGiveaway = botFrame.contentWindow.location.href.includes("/ga/p")
+
     if (GM_getValue("running")) {
       if (isSignIn) {
         doSignIn()
       } else if (getEl(".participation-need-login a")) {
         getEl(".participation-need-login a").click()
-      } else if (!isGiveaway) {
+      } else if (isHomePage) {
+        botFrame.contentWindow.location.href = "https://www.amazon.com/ga/giveaways"
+      } else if (isMainPage) {
+        logger("Searching for giveaways...")
         getGiveaways()
       } else if (isGiveaway) {
         lazyEnter()
@@ -326,10 +379,12 @@
     }
   }
 
-  async function solveCaptcha() {
+  function solveCaptcha() {
     if (!GM_getValue("twoCaptchaKey").length > 0) {
-      alert("No 2Captcha API key was provided. Captcha cannot be solved without a key.")
+      logger("No 2Captcha API key was provided. Captcha cannot be solved without a key.")
+      document.querySelector("#stop").click()
     } else {
+      logger("Solving captcha...")
       let captchaImgUrl
       if (getEl("#auth-captcha-image")) {
         captchaImgUrl = getEl("#auth-captcha-image").src
@@ -342,13 +397,13 @@
           sendCaptcha(res)
         },
         err => {
-          console.log(err)
+          logger(err)
         }
       )
     }
   }
 
-  async function sendCaptcha(imgUrl) {
+  function sendCaptcha(imgUrl) {
     var apiKey = GM_getValue("twoCaptchaKey")
     fetch("https://2captcha.com/in.php", {
       method: "POST",
@@ -372,6 +427,7 @@
             .then(captchaAnswer => {
               if (captchaAnswer.status === 1) {
                 clearInterval(waitForDecodedCaptcha)
+                logger("Captcha solved: " + captchaAnswer.request)
                 if (getEl("#image_captcha_input")) {
                   getEl("#image_captcha_input").value = captchaAnswer.request
                   getEl(".a-button-input").click()
@@ -397,13 +453,14 @@
                   }
                 }, 1000)
               } else if (captchaAnswer.request === "ERROR_CAPTCHA_UNSOLVABLE") {
+                logger("Captcha unsolvable")
                 clearInterval(decodeCaptcha)
               }
             })
         }, 5000)
       })
   }
-  async function getBase64Image(url, onSuccess, onError) {
+  function getBase64Image(url, onSuccess, onError) {
     var cors_api_host = "cors-anywhere.herokuapp.com"
     var cors_api_url = "https://" + cors_api_host + "/"
     var slice = [].slice
@@ -439,8 +496,20 @@
     xhr.send()
   }
 
-  function clearHistory() {
-    GM_setValue(historyKey, "|")
+  function showLog() {
+    document.querySelector("#log").style.display = "flex"
+    document.querySelector("#botOptions").style.display = "none"
+    document.querySelector("#showOptions").style.display = "flex"
+    document.querySelector("#clearLog").style.display = "flex"
+    document.querySelector("#showLog").style.display = "none"
+  }
+
+  function showOptions() {
+    document.querySelector("#showOptions").style.display = "none"
+    document.querySelector("#clearLog").style.display = "none"
+    document.querySelector("#log").style.display = "none"
+    document.querySelector("#showLog").style.display = "flex"
+    document.querySelector("#botOptions").style.display = "flex"
   }
 
   function getEl(selector) {
@@ -448,6 +517,7 @@
   }
 
   function claimWin(giveawayId) {
+    logger("Giveaway won!", "success")
     var wins = GM_getValue("totalWins")
     GM_setValue("totalWins", wins + 1)
 
@@ -458,16 +528,10 @@
     if (boxToClick) {
       boxToClick.click()
     } else {
-      if (getEl(".follow-author-continue-button") || getEl(".qa-amazon-follow-button")) {
-        if (GM_getValue("disableFollow")) {
-          nextGiveaway()
-        } else {
-          if (getEl(".qa-amazon-follow-button")) {
-            getEl(".qa-amazon-follow-button").click()
-          } else {
-            getEl(".follow-author-continue-button").click()
-          }
-        }
+      if (getEl(".qa-amazon-follow-button")) {
+        getEl(".qa-amazon-follow-button").click()
+      } else {
+        getEl(".follow-author-continue-button").click()
       }
     }
 
@@ -478,35 +542,29 @@
       GM_setValue("winHistory", winHistory + "|" + giveawayId)
     }
     winHistory = GM_getValue("winHistory")
-    if (winHistory.length > 4000000) {
-      winHistory = winHistory.substr(winHistory.length - 4000000)
+    if (winHistory.length > 1000000000) {
+      winHistory = winHistory.substr(winHistory.length - 1000000000)
     }
     GM_setValue("winHistory", winHistory)
 
-    setInterval(() => {
+    let clickButton = setInterval(() => {
       if (getEl(".shipAddressId input")) {
         getEl(".shipAddressId input").click()
       }
-      if (getEl("input.shipMyPrizeButton")) {
-        getEl("input.shipMyPrizeButton").click()
+      if (getEl('input[name="ShipMyPrize"]')) {
+        clearInterval(clickButton)
+        getEl('input[name="ShipMyPrize"]').click()
       }
       if (getEl("#continue-button")) {
         getEl("#continue-button input").click()
       }
-      if (getEl(".a-button-input")) {
-        getEl(".a-button-input").click()
-      }
+
       if (getEl("#lu_co_ship_box")) {
         getEl("#lu_co_ship_box").click()
       }
-      if (document.getElementsByName("ClaimMyPrize").length > 0) {
-        document.getElementsByName("ClaimMyPrize")[0].click()
-      }
-
-      if (botFrame.contentDocument.querySelectorAll("input.shipMyPrizeButton").length > 0) {
-        botFrame.contentDocument
-          .querySelectorAll("input.shipMyPrizeButton")
-          [botFrame.contentDocument.querySelectorAll("input.shipMyPrizeButton").length - 1].click()
+      if (getEl('input[name="ClaimMyPrize"]')) {
+        clearInterval(clickButton)
+        getEl('input[name="ClaimMyPrize"]').click()
       }
     }, 1000)
     setTimeout(() => {
@@ -523,8 +581,8 @@
     GM_setValue("currentSessionEntries", currentSessionEntries)
   }
 
-  async function lazyEnter() {
-    console.log(botFrame.contentWindow.location.href)
+  function lazyEnter() {
+    logger("Entering", "link", botFrame.contentWindow.location.href)
     var csrfToken = botFrame.contentWindow.P.pageContext.csrfToken
     var giveawayToken = botFrame.contentWindow.location.href.split("/p/")[1].split("?")[0]
     fetch(`https://www.amazon.com/gax/-/pex/api/v1/giveaway/${giveawayToken}/participation`, {
@@ -544,13 +602,14 @@
       .then(res => res.json())
       .then(data => {
         addToHistory(botFrame.contentWindow.location.href)
-        console.log(data.success.status)
         if (data.success.status !== "notParticipated") {
+          logger("Already entered")
           nextGiveaway()
           return
         }
 
         if (data.success.nextUserAction) {
+          let needUnfollow = data.success.nextUserAction.name === "followAuthor"
           fetch(`https://www.amazon.com/gax/-/pex/api/v1/giveaway/${giveawayToken}/participation/nextAction`, {
             credentials: "include",
             headers: {
@@ -585,17 +644,21 @@
               })
                 .then(res => res.json())
                 .then(data => {
-                  console.log(data.success.status)
+                  logger("Giveaway " + data.success.status)
                   recordEntry()
                   if (data.success.status !== "won" && data.success.status !== "lucky") {
-                    nextGiveaway()
+                    if (needUnfollow) {
+                      unfollowAuthors()
+                      return
+                    } else {
+                      nextGiveaway()
+                    }
                   } else {
                     claimWin(giveawayToken)
                   }
                 })
                 .catch(err => {
-                  console.log(err)
-                  nextGiveaway()
+                  logger(err)
                 })
             })
         } else {
@@ -615,8 +678,9 @@
           })
             .then(res => res.json())
             .then(data => {
-              console.log(data.success.status)
+              logger("Giveaway " + data.success.status)
               recordEntry()
+
               if (data.success.status !== "won" && data.success.status !== "lucky") {
                 nextGiveaway()
               } else {
@@ -624,15 +688,15 @@
               }
             })
             .catch(err => {
-              console.log(err)
+              logger(err)
               nextGiveaway()
             })
         }
       })
       .catch(err => {
         setTimeout(() => {
-          console.log(err)
-          console.log(getEl(".participation-need-login a"))
+          logger(err)
+
           if (getEl(".participation-need-login a")) {
             getEl(".participation-need-login a").click()
           } else {
@@ -640,5 +704,90 @@
           }
         }, 1000)
       })
+  }
+
+  function unfollowAuthors() {
+    logger("Unfollowing author...")
+    botFrame.contentWindow.location.href = "https://www.amazon.com/preferences/subscriptions/your-subscriptions/current-subscriptions"
+
+    let unfollowAll = setInterval(() => {
+      if (
+        (getEl("body") && getEl("body").textContent.includes("No current subscriptions")) ||
+        getEl("body").textContent.includes("We couldn't find that page")
+      ) {
+        clearInterval(unfollowAll)
+        nextGiveaway()
+      }
+      if (getEl(".a-switch-row.a-active input")) {
+        botFrame.contentDocument.querySelectorAll(".a-switch-row.a-active input").forEach(el => el.click())
+        botFrame.contentWindow.location.reload()
+      }
+    }, 2000)
+  }
+
+  function logger(str, style = "info", url) {
+    console.log(str)
+
+    if (str.toString().includes("TypeError")) {
+      str = "Entry not allowed"
+    }
+    let date = new Date().toString().split(" ")
+    date = date
+      .slice(1, 3)
+      .concat(date[4])
+      .join(" ")
+
+    let logTime = document.createElement("span")
+    logTime.textContent = "[" + date + "]"
+    logTime.style.color = "#bbb"
+    logTime.style.marginRight = "5px"
+
+    let logInfo = document.createElement("span")
+    logInfo.style.maxWidth = "465px"
+    logInfo.style.wordWrap = "break-word"
+    logInfo.textContent = str.toString()
+    if (style === "success") {
+      logInfo.style.color = "green"
+      logInfo.style.fontWeight = "bold"
+    }
+    if (style === "error") {
+      logInfo.style.color = "red"
+      logInfo.style.fontWeight = "bold"
+    }
+    if (style === "link") {
+      let link = document.createElement("a")
+      link.textContent = url
+      link.href = url
+      link.style.color = "blue"
+      link.style.marginLeft = "5px"
+      logInfo.appendChild(link)
+      link.onclick = e => {
+        e.preventDefault()
+        botFrame.contentWindow.location.href = url
+      }
+    }
+
+    let logItem = document.createElement("div")
+    logItem.style.display = "flex"
+    logItem.appendChild(logTime)
+    logItem.appendChild(logInfo)
+    if (str === "") {
+      logItem = document.createElement("div")
+      logItem.appendChild(document.createElement("br"))
+    }
+    document.querySelector("#log").appendChild(logItem)
+    logItem.scrollIntoView()
+
+    let logHistory = GM_getValue("logHistory")
+    if (!logHistory) {
+      GM_setValue("logHistory", "|" + logItem.outerHTML)
+    } else {
+      GM_setValue("logHistory", logHistory + "|" + logItem.outerHTML)
+    }
+    logHistory = GM_getValue("logHistory")
+    if (logHistory.length > 1000000000) {
+      logHistory = logHistory.substr(logHistory.length - 1000000000)
+    }
+    GM_setValue("logHistory", logHistory)
   }
 })()
