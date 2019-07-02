@@ -89,15 +89,15 @@
       '	    <div style="">\n' +
       // '      <input type="password" name="whatever" autocomplete="new-password" />\n' +
       // '      <input  autocomplete="off" style="display: none;" name="hiddenPassword" type="password" placeholdertype="Amazon Password"></input>\n' +
-      '      <div style="padding-bottom: 10px;"><label for="amazonEmail">Amazon Email</label><input id="amazonEmail" autocomplete="off" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important;" name="amazonEmail" type="text" placeholdertype="Amazon Email"></input></div>\n' +
-      '      <div style="padding-bottom: 10px;"><label for="amazonPassword">Amazon Passsword</label><input id="amazonPassword" autocomplete="off" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important;" name="amazonPassword" type="password" placeholdertype="Amazon Password"></input></div>\n' +
+      '      <div style="padding-bottom: 10px;"><label for="amazonEmail">Amazon Email</label><input id="amazonEmail" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important; border: 1px solid rgb(206, 212, 218) !important;" name="amazonEmail" type="text" placeholdertype="Amazon Email"></input></div>\n' +
+      '      <div style="padding-bottom: 10px;"><label for="amazonPassword">Amazon Passsword</label><input id="amazonPassword" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important; border: 1px solid rgb(206, 212, 218) !important;" name="amazonPassword" type="password" placeholdertype="Amazon Password"></input></div>\n' +
       // '       <div><input id="turboMode" name="turboMode" type="checkbox"></input><span> Enable Turbo Mode (Experimental)</span></div>\n' +
       "	  	</div>\n" +
       '	    <div style="">\n' +
-      '      <div style="padding-bottom: 10px;"><label for="twoCaptchaKey">2Captcha API Key</label><input id="twoCaptchaKey" style="width: 250px;" name="twoCaptchaKey" type="text" placeholdertype="Enter your key here"></input></div>\n' +
-      '	  	  <label id="">Filtered Giveaways</label>\n' +
+      '      <div style="padding-bottom: 10px;"><label for="twoCaptchaKey">2Captcha API Key</label><input id="twoCaptchaKey" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important;" name="twoCaptchaKey" type="text" placeholdertype="Enter your key here"></input></div>\n' +
+      '	  	  <label id="">Disabled Giveaways</label>\n' +
       '	  	  <div style="padding-left: 7px;">\n' +
-      '       <div><input id="disableKindle" name="disableKindle" type="checkbox"></input><span> Kindle Books</span></div>\n' +
+      // '       <div><input id="disableKindle" name="disableKindle" type="checkbox"></input><span> Kindle Books</span></div>\n' +
       '	  	    <div><input id="disableVideo" name="disableVideo" type="checkbox"></input><span> Requires Video</span></div>\n' +
       ' 	    <div><input id="disableFollow" name="disableFollow" type="checkbox"></input><span> Requires Follow on Amazon</span></div>\n' +
       "	  	  </div>\n" +
@@ -144,7 +144,7 @@
     document.querySelector("#stop").style.display = GM_getValue("running") ? "block" : "none"
     document.querySelector("#disableVideo").checked = GM_getValue("disableVideo")
     document.querySelector("#disableFollow").checked = GM_getValue("disableFollow")
-    document.querySelector("#disableKindle").checked = GM_getValue("disableKindle")
+    // document.querySelector("#disableKindle").checked = GM_getValue("disableKindle")
     // document.querySelector("#turboMode").checked = GM_getValue("turboMode")
     if (GM_getValue("twoCaptchaKey")) {
       document.querySelector("#twoCaptchaKey").value = GM_getValue("twoCaptchaKey")
@@ -186,7 +186,7 @@
         if (document.querySelector("#twoCaptchaKey").value.length > 0) {
           GM_setValue("twoCaptchaKey", document.querySelector("#twoCaptchaKey").value)
         }
-        GM_setValue("disableKindle", document.querySelector("#disableKindle").checked)
+        // GM_setValue("disableKindle", document.querySelector("#disableKindle").checked)
         GM_setValue("disableVideo", document.querySelector("#disableVideo").checked)
         GM_setValue("disableFollow", document.querySelector("#disableFollow").checked)
         // GM_setValue("turboMode", document.querySelector("#turboMode").checked)
@@ -235,6 +235,10 @@
         // } else if (getEl("#cvf-account-switcher-add-accounts-link")) {
         //   clearInterval(signIn)
         //   getEl("#cvf-account-switcher-add-accounts-link").click()
+      } else if (getEl("body").textContent.includes("Send OTP")) {
+        clearInterval(signIn)
+        GM_setValue("running", false)
+        alert("NEED OTP")
       } else if (getEl("#ap_password")) {
         if (
           getEl(".a-size-base.a-color-tertiary.auth-text-truncate") &&
@@ -255,7 +259,6 @@
         clearInterval(signIn)
         let accountAdded = false
         botFrame.contentDocument.querySelectorAll(".cvf-account-switcher-spacing-base a").forEach(el => {
-          console.log(el.textContent)
           if (el.textContent.includes(document.querySelector("#amazonEmail").value)) {
             accountAdded = true
             el.click()
@@ -302,7 +305,16 @@
       .then(data => {
         let visited = GM_getValue(historyKey)
         data.giveaways.forEach(item => {
-          if (!visited || !visited.includes(item.id)) {
+          let canAdd = !visited || !visited.includes(item.id)
+          if (
+            canAdd &&
+            item.participationRequirement &&
+            ((item.participationRequirement.includes("WATCH") && GM_getValue("disableVideo")) ||
+              (item.participationRequirement.includes("FOLLOW") && GM_getValue("disableFollow")))
+          ) {
+            canAdd = false
+          }
+          if (canAdd) {
             allowedGiveaways.push("https://www.amazon.com/ga/p/" + item.id)
           }
         })
@@ -518,7 +530,10 @@
   // }
 
   async function main() {
-    var isSignIn = botFrame.contentWindow.location.href.includes("https://www.amazon.com/ap/signin") || getEl(".cvf-account-switcher")
+    var isSignIn =
+      botFrame.contentWindow.location.href.includes("https://www.amazon.com/ap/signin") ||
+      getEl(".cvf-account-switcher") ||
+      botFrame.contentWindow.location.href.includes("https://www.amazon.com/ap/cvf")
     // var isMainPage = botFrame.contentWindow.location.href.includes("?pageId=")
     var isGiveaway = botFrame.contentWindow.location.href.includes("/ga/p")
     if (GM_getValue("running")) {
