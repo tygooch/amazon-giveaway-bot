@@ -268,8 +268,8 @@
       } else if (getEl(".cvf-account-switcher-spacing-base a")) {
         clearInterval(signIn)
         let accountAdded = false
-        console.log(botFrame.contentDocument.querySelectorAll(".cvf-widget-btn-verify-account-switcher"))
-        botFrame.contentDocument.querySelectorAll(".cvf-widget-btn-verify-account-switcher").forEach(el => {
+        console.log(botFrame.contentDocument.querySelectorAll(".a-section.cvf-account-switcher-spacing-base a"))
+        botFrame.contentDocument.querySelectorAll(".a-section.cvf-account-switcher-spacing-base a").forEach(el => {
           if (el.textContent.includes(document.querySelector("#amazonEmail").value)) {
             accountAdded = true
             el.click()
