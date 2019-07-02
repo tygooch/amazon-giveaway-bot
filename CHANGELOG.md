@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Automatically unfollow authors [#7](https://github.com/TyGooch/amazon-giveaway-bot/issues/7)
+
+### Added
+
+- Logs are now visible on the UI, allowing users to monitor progress and access data from past sessions
+
+## [2.1.0] - 2019-07-01
+
+### Fixed
+
 - Fixed logic behind claiming a prize [#6](https://github.com/TyGooch/amazon-giveaway-bot/issues/6)
 
 ### Added
