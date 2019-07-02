@@ -2,7 +2,7 @@
 //
 // ==UserScript==
 // @name         Amazon Giveaway Bot
-// @version      2.1.1
+// @version      2.1.2
 // @author       Ty Gooch
 // @updateURL    https://github.com/TyGooch/amazon-giveaway-bot/raw/master/amazonGiveawayBot.user.js
 // @description  Automates Amazon giveaway entries
@@ -85,6 +85,7 @@
       '	  	  <div style="padding-left: 7px;">\n' +
       '	  	    <div><input id="disableVideo" name="disableVideo" type="checkbox"></input><span> Requires Video</span></div>\n' +
       ' 	    <div><input id="disableFollow" name="disableFollow" type="checkbox"></input><span> Requires Follow on Amazon</span></div>\n' +
+      ' 	    <div><input id="disableKindle" name="disableKindle" type="checkbox"></input><span> Kindle Books</span></div>\n' +
       "	  	  </div>\n" +
       "	  	</div>\n" +
       "  </div>\n" +
@@ -147,6 +148,7 @@
     document.querySelector("#stop").style.display = GM_getValue("running") ? "block" : "none"
     document.querySelector("#disableVideo").checked = GM_getValue("disableVideo")
     document.querySelector("#disableFollow").checked = GM_getValue("disableFollow")
+    document.querySelector("#disableKindle").checked = GM_getValue("disableKindle")
 
     if (GM_getValue("twoCaptchaKey")) {
       document.querySelector("#twoCaptchaKey").value = GM_getValue("twoCaptchaKey")
@@ -204,12 +206,14 @@
 
         GM_setValue("disableVideo", document.querySelector("#disableVideo").checked)
         GM_setValue("disableFollow", document.querySelector("#disableFollow").checked)
+        GM_setValue("disableKindle", document.querySelector("#disableKindle").checked)
 
         document.querySelector("#currentSessionEntriesValue").innerHTML = GM_getValue("currentSessionEntries")
         document.querySelector("#lifetimeEntriesValue").innerHTML = GM_getValue("lifetimeEntries")
         document.querySelector("#totalWinsValue").innerHTML = GM_getValue("totalWins")
 
         if (!botFrame) {
+          clearInterval(updateUI)
           GM_setValue("running", false)
           document.querySelector("#currentSessionEntries").style.visibility = "hidden"
           document.querySelector("#stop").style.display = "none"
@@ -302,6 +306,10 @@
         let visited = GM_getValue(historyKey)
         data.giveaways.forEach(item => {
           let canAdd = !visited || !visited.includes(item.id)
+
+          if (item.title.includes("Kindle Edition") && GM_getValue("disableKindle")) {
+            canAdd = false
+          }
           if (
             canAdd &&
             item.participationRequirement &&
@@ -337,8 +345,8 @@
       GM_setValue(historyKey, visited + "|" + url.replace("https://www.amazon.com/ga/p/", ""))
     }
     visited = GM_getValue(historyKey)
-    if (visited.length > 1000000000) {
-      visited = visited.substr(visited.length - 1000000000)
+    if (visited.length > 100000) {
+      visited = visited.substr(visited.length - 100000)
     }
     GM_setValue(historyKey, visited)
   }
@@ -530,7 +538,8 @@
     } else {
       if (getEl(".qa-amazon-follow-button")) {
         getEl(".qa-amazon-follow-button").click()
-      } else {
+      }
+      if (getEl(".follow-author-continue-button")) {
         getEl(".follow-author-continue-button").click()
       }
     }
@@ -542,8 +551,8 @@
       GM_setValue("winHistory", winHistory + "|" + giveawayId)
     }
     winHistory = GM_getValue("winHistory")
-    if (winHistory.length > 1000000000) {
-      winHistory = winHistory.substr(winHistory.length - 1000000000)
+    if (winHistory.length > 100000) {
+      winHistory = winHistory.substr(winHistory.length - 100000)
     }
     GM_setValue("winHistory", winHistory)
 
@@ -552,24 +561,25 @@
         getEl(".shipAddressId input").click()
       }
       if (getEl('input[name="ShipMyPrize"]')) {
-        clearInterval(clickButton)
+        // clearInterval(clickButton)
         getEl('input[name="ShipMyPrize"]').click()
       }
-      if (getEl("#continue-button")) {
+      if (getEl("#continue-button input")) {
         getEl("#continue-button input").click()
       }
 
-      if (getEl("#lu_co_ship_box")) {
-        getEl("#lu_co_ship_box").click()
-      }
+      // if (getEl("#lu_co_ship_box")) {
+      //   getEl("#lu_co_ship_box").click()
+      // }
       if (getEl('input[name="ClaimMyPrize"]')) {
-        clearInterval(clickButton)
+        // clearInterval(clickButton)
         getEl('input[name="ClaimMyPrize"]').click()
       }
     }, 1000)
     setTimeout(() => {
+      clearInterval(clickButton)
       nextGiveaway()
-    }, 10000)
+    }, 30000)
   }
 
   function recordEntry() {
@@ -659,6 +669,7 @@
                 })
                 .catch(err => {
                   logger(err)
+                  nextGiveaway()
                 })
             })
         } else {
@@ -711,11 +722,9 @@
     botFrame.contentWindow.location.href = "https://www.amazon.com/preferences/subscriptions/your-subscriptions/current-subscriptions"
 
     let unfollowAll = setInterval(() => {
-      if (
-        (getEl("body") && getEl("body").textContent.includes("No current subscriptions")) ||
-        getEl("body").textContent.includes("We couldn't find that page")
-      ) {
+      if ((getEl("body") && getEl("body").textContent.includes("No current subscriptions")) || getEl("body").innerText.includes("We couldn't find that page")) {
         clearInterval(unfollowAll)
+        clearTimeout(timeout)
         nextGiveaway()
       }
       if (getEl(".a-switch-row.a-active input")) {
@@ -723,6 +732,12 @@
         botFrame.contentWindow.location.reload()
       }
     }, 2000)
+    let timeout = setTimeout(() => {
+      if (unfollowAll) {
+        clearInterval(unfollowAll)
+      }
+      nextGiveaway()
+    }, 20000)
   }
 
   function logger(str, style = "info", url) {
@@ -785,8 +800,8 @@
       GM_setValue("logHistory", logHistory + "|" + logItem.outerHTML)
     }
     logHistory = GM_getValue("logHistory")
-    if (logHistory.length > 1000000000) {
-      logHistory = logHistory.substr(logHistory.length - 1000000000)
+    if (logHistory.length > 100000) {
+      logHistory = logHistory.substr(logHistory.length - 100000)
     }
     GM_setValue("logHistory", logHistory)
   }
