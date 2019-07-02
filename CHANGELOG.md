@@ -9,9 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Redirect after timeout if 404 occurs [#9](https://github.com/TyGooch/amazon-giveaway-bot/issues/8)
+- Redirect after timeout if 404 occurs [#9](https://github.com/TyGooch/amazon-giveaway-bot/issues/9)
 
-- Fix claiming Kindle prizes and allow option to disable entry if wanted [#10](https://github.com/TyGooch/amazon-giveaway-bot/issues/9)
+- Fix claiming Kindle prizes and allow option to disable entry if wanted [#10](https://github.com/TyGooch/amazon-giveaway-bot/issues/10)
 
 - Fix typos in changelog
 
