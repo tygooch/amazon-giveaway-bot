@@ -6,10 +6,7 @@
 // @author       Ty Gooch
 // @updateURL    https://github.com/TyGooch/amazon-giveaway-bot/raw/master/amazonGiveawayBot.user.js
 // @description  Automates Amazon giveaway entries
-// @match        https://www.amazon.com/ga/*
-// @match        https://www.amazon.com/ap/signin*
 // @match        https://www.amazon.com/giveaway/*
-// @include      https://www.amazon.com/ga/
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_addStyle
@@ -23,20 +20,10 @@
   var botFrame
   var log = []
   var offset = 0
-  GM_setValue("initialized", false)
+  // GM_setValue("initialized", false)
 
   // if (GM_getValue("initialized")) {
-  GM_addStyle(
-    "#nav-upnav, header, #giveaway-confetti-header, #giveaway-result-info-bar, #skiplink , .giveaway-footer-container, #navFooter { display: none !important; }"
-  )
-  GM_addStyle("body::-webkit-scrollbar { width: 0 !important }")
-  GM_addStyle(".content-wrapper { height: 100vh;}")
-  GM_addStyle(
-    ".listing-loading-container, .participation-loading-container { display: flex; flex-direction: column; justify-content: center; height: 100vh !important; border: none !important; background-color: #fff !important;}"
-  )
-  GM_addStyle(".spinner { transform: scale(2); margin-top: 0 !important; margin-bottom: 0 !important;}")
-  GM_addStyle(".a-divider-normal {display: none;}")
-  // }
+    // }
   if (window.location.href.includes("/giveaway/")) {
     GM_setValue("initialized", false)
     window.addEventListener("load", init, { capture: false, once: true })
@@ -69,43 +56,78 @@
 
     var controlsTemplate =
       '<div id="container"\n' +
-      "  style=\"font-family: Roboto,\\'Helvetica Neue\\',Helvetica,Arial,sans-serif;position: relative; min-width: 600px; margin: auto auto; color: #212529; background-color: #fff; border: 1px solid transparent; border-radius: .28571429rem; overflow: none; z-index: 9999; text-align: left; display: flex; flex-direction: column; justify-content: center;\">\n" +
-      "  <div>\n" +
-      '    <div style="padding: 16px; margin-top: 0; text-align: center;"><img style="width: 200px;  margin-left: auto; margin-right: auto;" src="https://i.ibb.co/xgYpv6T/giveaway-Bot-Logo-Blue.png" /></div>\n' +
+      "  style=\"font-family: Roboto,\\'Helvetica Neue\\',Helvetica,Arial,sans-serif;position: relative; min-width: 600px; margin: auto auto; color: #212529; background-color: #fff; border: 1px solid transparent; border-radius: .28571429rem; overflow: none; z-index: 9999; text-align: left; display: flex; flex-direction: column; justify-content: space-between;\">\n" +
+      // "  <div>\n" +
+      '    <div style="border-bottom: 1px solid #ddd; margin-top: 0; text-align: center;"><img style="width: 600px;" src="https://svgshare.com/i/Dwc.svg" /></div>\n' +
+      // '  <div style="display: flex; padding: 16px; justify-content: space-between;">\n' +
+      // "  </div>\n" +
+      '  <div style="display: flex; background-color: #fff; margin-bottom: 5px; border-bottom: 1px solid #ddd;" >\n' +
+      '  		<button id="showOptions" style="display: flex; outline: 0px !important; background-color: transparent; border: 0px; border-bottom: 2px solid #e47911; color: #212529; padding: .78571429em 1em; min-height: 1em; line-height: 1em; font-size: 1rem; font-weight: bold;">Configuration</button>\n' +
+      '  		<button id="showLog" style="display: flex; outline: 0px !important; background-color: transparent; border: 0px; border-bottom: 0px solid #e47911; color: rgba(0,0,0,0.6); padding: .78571429em 1em; min-height: 1em; line-height: 1em; font-size: 1rem;">Activity Log</button>\n' +
+      '  		<button id="showBotFrame" style="display: flex; outline: 0px !important; background-color: transparent; border: 0px; border-bottom: 0px solid #e47911; color: rgba(0,0,0,0.6); padding: .78571429em 1em; min-height: 1em; line-height: 1em; font-size: 1rem;">Interactive View</button>\n' +
+      // '  		<span id="" style="display: flex; outline: 0px !important; background-color: transparent; border: 0px; color: rgba(0,0,0,0.6); flex: 1;"></span>\n' +
       "  </div>\n" +
-      '  <div style="display:flex; padding: 0px 16px; padding-bottom: 7px; justify-content: space-between; border-bottom: 1px solid rgba(34,36,38,.15);">\n' +
-      '    <span style="display: inline-block;" id="lifetimeEntries"><b>Giveaways Entered: </b><span style="" id="lifetimeEntriesValue"></span><span id="currentSessionEntries"> (<span style="" id="currentSessionEntriesValue"></span> this session)</span></span>\n' +
-      '    <span style="display: inline-block;" id="totalWins"><b>Giveways Won: </b><span style="" id="totalWinsValue"></span><span id="currentSessionWins"> (<span style="" id="currentSessionWinsValue"></span> this session)</span></span>\n' +
-      "  </div>\n" +
-      '  <div id="botFrameContainer" style="background-color: #fff; width: 600px; height: 287.5px; padding: 0px;"></div>\n' +
-      '  <div id="botOptions" style=" background-color: #fff; width: 100%; display: flex; padding: 16px; border-top: 1px solid rgba(34,36,38,.15); text-align: left; justify-content: space-between;">\n' +
-      '	    <div style="">\n' +
-      '      <div style="padding-bottom: 10px;"><label for="amazonEmail">Amazon Email</label><input id="amazonEmail" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important; border: 1px solid rgb(206, 212, 218) !important;" name="amazonEmail" type="text" placeholdertype="Amazon Email"></input></div>\n' +
-      '      <div style="padding-bottom: 10px;"><label for="amazonPassword">Amazon Passsword</label><input id="amazonPassword" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important; border: 1px solid rgb(206, 212, 218) !important;" name="amazonPassword" type="password" placeholdertype="Amazon Password"></input></div>\n' +
+      // '  <div style="display:flex; padding: 0px 16px; padding-bottom: 7px; justify-content: space-between; border-bottom: 1px solid #ddd;">\n' +
+      // '    <span style="display: inline-block;" id="lifetimeEntries"><b>Giveaways Entered: </b><span style="" id="lifetimeEntriesValue"></span><span id="currentSessionEntries"> (<span style="" id="currentSessionEntriesValue"></span> this session)</span></span>\n' +
+      // '    <span style="display: inline-block;" id="totalWins"><b>Giveways Won: </b><span style="" id="totalWinsValue"></span><span id="currentSessionWins"> (<span style="" id="currentSessionWinsValue"></span> this session)</span></span>\n' +
+      // "  </div>\n" +
+      '  <div id="botOptions" style=" background-color: #fff; width: 100%; display: flex; flex-direction: column; padding: 7px 16px; height: 287.5px; width: 600px; text-align: left; overflow: scroll;">\n' +
+      '     <div style="font-size: 17px; font-weight: 700; margin-bottom: 10px; border-bottom: 1px solid #eee;">Amazon Account</div>\n' +
+      '	    <div style="display: flex; padding-bottom:10px;">\n' +
+      '  	    <div style="display: flex; flex-direction: column;">\n' +
+      '         <div style="padding-bottom: 10px;"><label for="amazonEmail">Email</label><input id="amazonEmail" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important; border: 1px solid rgb(206, 212, 218) !important;" name="amazonEmail" type="text" placeholdertype="Amazon Email"></input></div>\n' +
+      " 	  	</div>\n" +
+      '         <div style="padding-left: 10px;"><label for="amazonPassword">Passsword</label><input id="amazonPassword" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important; border: 1px solid rgb(206, 212, 218) !important;" name="amazonPassword" type="password" placeholdertype="Amazon Password"></input></div>\n' +
       "	  	</div>\n" +
-      '	    <div style="">\n' +
-      '      <div style="padding-bottom: 10px;"><label for="twoCaptchaKey">2Captcha API Key</label><input id="twoCaptchaKey" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important;" name="twoCaptchaKey" type="text" placeholdertype="Enter your key here"></input></div>\n' +
-      '	  	  <label id="">Disabled Giveaways</label>\n' +
-      '	  	  <div style="padding-left: 7px;">\n' +
-      '	  	    <div><input id="disableVideo" name="disableVideo" type="checkbox"></input><span> Requires Video</span></div>\n' +
-      ' 	    <div><input id="disableFollow" name="disableFollow" type="checkbox"></input><span> Requires Follow on Amazon</span></div>\n' +
-      ' 	    <div><input id="disableKindle" name="disableKindle" type="checkbox"></input><span> Kindle Books</span></div>\n' +
+      '     <div style="font-size: 17px; font-weight: 700; margin-bottom: 10px; border-bottom: 1px solid #eee;">Captcha Support</div>\n' +
+      '       <div style="padding-bottom: 20px;"><label for="twoCaptchaKey">2Captcha Key <a style="font-weight: 400;" href="https://2captcha.com?from=7493321">(referral link)</a></label><input id="twoCaptchaKey" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important;" name="twoCaptchaKey" type="text" placeholdertype="Enter your key here"></input></div>\n' +
+      '     <div style="font-size: 17px; font-weight: 700; margin-bottom: 10px; border-bottom: 1px solid #eee;">Filtered Giveaways</div>\n' +
+      '	    <div style="display: flex; padding-bottom:10px;">\n' +
+      '	      <div style="display: flex; flex-direction: column;">\n' +
+      '	    	  <div style="padding-bottom: 10px;">\n' +
+      '	    	    <div><input id="disableVideo" name="disableVideo" type="checkbox"></input><span> Requires Video</span></div>\n' +
+      ' 	        <div><input id="disableFollow" name="disableFollow" type="checkbox"></input><span> Requires Follow</span></div>\n' +
+      '     	    <div><input id="disableKindle" name="disableKindle" type="checkbox"></input><span> Kindle Books</span></div>\n' +
+      "	  	    </div>\n" +
+      "	  	  </div>\n" +
+      "	  	</div>\n" +
+      '     <div style="font-size: 17px; font-weight: 700; margin-bottom: 10px; border-bottom: 1px solid #eee;">Delivery Address</div>\n' +
+      '	    <div style="display: flex;">\n' +
+      '	      <div style="display: flex; flex-direction: column;">\n' +
+      '       	<div><input id="defaultAddress" name="defaultAddress" type="radio" checked="true"></input><span> Use account default</span></div>\n' +
+      '     	  <div><input id="customAddress" name="customAddress" type="radio"></input><span> Provide different address below</span></div>\n' +
+      '	        <div id="addressForm" style="display: none; flex-direction: column;">\n' +
+      '             <div style="padding: 10px 0px;"><label for="deliveryName">Full Name</label><input id="deliveryName" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important; border: 1px solid rgb(206, 212, 218) !important;" name="deliveryName" type="text"></input></div>\n' +
+      '             <div style="padding-bottom: 10px;"><label for="deliveryStreet1">Street Address</label><input id="deliveryStreet1" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important; border: 1px solid rgb(206, 212, 218) !important;" name="deliveryStreet1" type="text" placeholder="Street and number, P.O. box, c/o."></input></div>\n' +
+      '             <input id="deliveryStreet2" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important; border: 1px solid rgb(206, 212, 218) !important;" name="deliveryStreet2" type="text" placeholder="Apartment, suite, unit, building, floor, etc."></input>\n' +
+      '             <div style="padding: 10px 0px;"><label for="deliveryCity">City</label><input id="deliveryCity" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important; border: 1px solid rgb(206, 212, 218) !important;" name="deliveryCity" type="text"></input></div>\n' +
+      '             <div style="padding-bottom: 10px;"><label for="deliveryState">State / Province / Region</label><input id="deliveryState" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important; border: 1px solid rgb(206, 212, 218) !important;" name="deliveryState" type="text"></input></div>\n' +
+      '             <div style="padding-bottom: 10px;"><label for="deliveryZip">Zip Code</label><input id="deliveryZip" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important; border: 1px solid rgb(206, 212, 218) !important;" name="deliveryZip" type="text"></input></div>\n' +
+      '             <div style="padding-bottom: 10px;"><label for="deliveryPhone">Phone number</label><input id="deliveryPhone" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important; border: 1px solid rgb(206, 212, 218) !important;" name="deliveryPhone" type="text"></input></div>\n' +
+      "	  	    </div>\n" +
       "	  	  </div>\n" +
       "	  	</div>\n" +
       "  </div>\n" +
-      '  <div id="" style="flex: 1; position: flex-end;">\n' +
-      '  <div id="log" style="width: 600px; display: none; flex-direction: column; border-top: 1px solid rgba(34,36,38,.15); background-color: #fff; padding: 5px 16px 0px 16px; text-align: left; overflow: scroll; height: 157px;">\n' +
+      '  <div id="log" style="position: relative; width: 600px; display: none; flex-direction: column;  background-color: #fff; text-align: left; overflow: scroll; height: 287.5px; max-height: 287.5px;">\n' +
+      '    <div id="logContent" style="position: relative; width: 600px; display: flex; flex-direction: column;  background-color: #fff; padding: 5px 16px; text-align: left; overflow: scroll; height: 287.5px; max-height: 287.5px;"></div>\n' +
+      '  	 <button id="clearLog" style="position: absolute; top: 0px; right: 10px; width: 50px;">Clear</button>\n' +
       "  </div>\n" +
-      '  <div style="margin-top: 5px; border-top: 1px solid rgba(34,36,38,.15); background-color: #fff; display: flex; justify-content: space-between; padding: 16px; text-align: left;">\n' +
-      '  <div style="display: flex;" >\n' +
-      '  		<button id="showLog" style="display: flex; background-color: #e0e1e2; border: 0; border-radius: .28571429rem; color: rgba(0,0,0,0.6); padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Show Log</button>\n' +
-      '  		<button id="showOptions" style="display: none; background-color: #e0e1e2; border: 0; border-radius: .28571429rem; color: rgba(0,0,0,0.6); padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Show Controls</button>\n' +
-      '  		<button id="clearLog" style="margin-left: 5px; display: none; background-color: #e0e1e2; border: 0; border-radius: .28571429rem; color: rgba(0,0,0,0.6); padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Clear Log</button>\n' +
+      '  <div id="botFrameContainer" style="display: none; background-color: #fff; border-bottom: 0px solid #ddd; width: 600px; height: 287.5px; max-height: 287.5px; padding: 0px; overflow: scroll;"></div>\n' +
+      // '  <div id="" style="flex: 1; position: flex-end;">\n' +
+      '  <div style=" border-top: 1px solid #ddd; background-color: #fff; display: flex; justify-content: space-between; padding: 16px; text-align: left;">\n' +
+      '  <div style="display:flex; flex-direction: column; justify-content: space-apart; border-top: 0px solid #ddd; ">\n' +
+      '    <span style="display: flex;" id="totalWins"><b>Giveways Won: </b><span style="margin: 0px 5px;" id="totalWinsValue"></span><span style="display: none;" id="currentSessionWins"> (<span style="" id="currentSessionWinsValue"></span> this session)</span></span>\n' +
+      '    <span style="display: flex;" id="lifetimeEntries"><b>Giveaways Entered: </b><span style="margin: 0px 5px;" id="lifetimeEntriesValue"></span><span id="currentSessionEntries"> (<span style="" id="currentSessionEntriesValue"></span> this session)</span></span>\n' +
       "  </div>\n" +
+      // '  <div style="display: flex;" >\n' +
+      // '  		<button id="showLog" style="display: flex; background-color: #e0e1e2; border: 0; border-radius: .28571429rem; color: rgba(0,0,0,0.6); padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Log</button>\n' +
+      // '  		<button id="showOptions" style="display: none; background-color: #e0e1e2; border: 0; border-radius: .28571429rem; color: rgba(0,0,0,0.6); padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Settings</button>\n' +
+      // '  		<button id="clearLog" style="margin-left: 5px; display: none; background-color: #e0e1e2; border: 0; border-radius: .28571429rem; color: rgba(0,0,0,0.6); padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Clear Log</button>\n' +
+      // "  </div>\n" +
       '  		<button id="run" style="background-color: #2185d0; border: 0; border-radius: .28571429rem; color: #fff; padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Start Bot</button>\n' +
       '  		<button id="stop" style="background-color: #d10919; border: 0; border-radius: .28571429rem; color: #fff;  padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Stop Bot</button>\n' +
       "  </div>\n" +
-      "  </div>\n" +
+      // "  </div>\n" +
       "</div>\n"
 
     var controlsHTML = document.createElement("div")
@@ -142,10 +164,17 @@
       logHistory.split("|").forEach(el => {
         let node = document.createElement("div")
         node.innerHTML = el
-        document.querySelector("#log").appendChild(node)
+        node.onclick = e => {
+          e.preventDefault()
+          if (node.querySelector("a")) {
+            botFrame.contentWindow.location.href = node.querySelector("a").href
+            document.querySelector("#showBotFrame").click()
+          }
+        }
+        document.querySelector("#logContent").appendChild(node)
       })
 
-      logger("")
+      // logger("")
     }
 
     document.querySelector("#run").style.display = GM_getValue("running") ? "none" : "block"
@@ -160,19 +189,36 @@
     document.querySelector("#lifetimeEntriesValue").innerHTML = GM_getValue("lifetimeEntries")
     document.querySelector("#totalWinsValue").innerHTML = GM_getValue("totalWins")
     document.querySelector("#currentSessionEntries").style.visibility = "hidden"
-    document.querySelector("#currentSessionWins").style.visibility = "hidden"
     document.querySelector("#twoCaptchaKey").style.border = "1px solid #ced4da"
     document.body.style.overflow = "hidden"
 
+    if (GM_getValue("currentAccount")) {
+      document.querySelector("#amazonEmail").value = GM_getValue("currentAccount")
+    }
+
+    document.querySelector("#defaultAddress").onclick = function() {
+      document.querySelector("#addressForm").style.display = "none"
+      document.querySelector("#customAddress").checked = false
+    }
+    
+    document.querySelector("#customAddress").onclick = function() {
+      document.querySelector("#addressForm").style.display = "flex"
+      document.querySelector("#defaultAddress").checked = false
+    }
+
     document.querySelector("#showLog").onclick = function() {
       showLog()
+    }
+    document.querySelector("#showBotFrame").onclick = function() {
+      showBotFrame()
     }
     document.querySelector("#showOptions").onclick = function() {
       showOptions()
     }
     document.querySelector("#clearLog").onclick = function() {
       GM_setValue("logHistory", "|")
-      document.querySelector("#log").innerHTML = ""
+      document.querySelector("#logContent").innerHTML = ""
+      logger("Log Cleared")
     }
 
     document.querySelector("#run").onclick = function() {
@@ -184,13 +230,13 @@
       GM_setValue("running", true)
       GM_setValue("currentSessionEntries", 0)
       GM_setValue("currentSessionWins", 0)
-      historyKey = document.querySelector("#amazonEmail").value + "history"
       logger("Bot started")
 
       document.querySelector("#run").style.display = "none"
       document.querySelector("#stop").style.display = "block"
       document.querySelector("#currentSessionEntries").style.visibility = "visible"
-      document.querySelector("#currentSessionWins").style.visibility = "visible"
+      document.querySelector("#currentSessionWins").style.display = "inline-block"
+      document.querySelector("#currentSessionWinsValue").innerHTML = "0" + " "
       document.querySelector("#botOptions").style.display = "none"
       document.querySelector("#showLog").click()
       if (!GM_getValue("currentAccount") || !GM_getValue("currentAccount").includes(document.querySelector("#amazonEmail").value)) {
@@ -198,7 +244,7 @@
         botFrame.contentWindow.location.href = "https://www.amazon.com/gp/navigation/redirector.html/ref=sign-in-redirect"
       } else {
         logger(GM_getValue("currentAccount") + " already signed in")
-        main()
+        botFrame.contentWindow.location.reload()
       }
 
       let updateUI = setInterval(function() {
@@ -223,7 +269,6 @@
         if (!botFrame) {
           clearInterval(updateUI)
           GM_setValue("running", false)
-          document.querySelector("#currentSessionEntries").style.visibility = "hidden"
           document.querySelector("#stop").style.display = "none"
           document.querySelector("#run").style.display = "block"
         }
@@ -243,7 +288,7 @@
 
       GM_setValue("running", false)
       document.querySelector("#currentSessionEntries").style.visibility = "hidden"
-      document.querySelector("#currentSessionWins").style.visibility = "hidden"
+      document.querySelector("#currentSessionWins").style.display = "none"
       document.querySelector("#stop").style.display = "none"
       document.querySelector("#run").style.display = "block"
     }
@@ -312,6 +357,7 @@
           return
         }
         offset += 1
+        historyKey = document.querySelector("#amazonEmail").value + "history"
         let visited = GM_getValue(historyKey)
         data.giveaways.forEach(item => {
           let canAdd = !visited || !visited.includes(item.id)
@@ -347,17 +393,17 @@
   }
 
   function addToHistory(url) {
+    historyKey = document.querySelector("#amazonEmail").value + "history"
     let visited = GM_getValue(historyKey)
     if (!visited) {
       GM_setValue(historyKey, "|" + url.replace("https://www.amazon.com/ga/p/", ""))
     } else {
-      GM_setValue(historyKey, visited + "|" + url.replace("https://www.amazon.com/ga/p/", ""))
+      visited += "|" + url.replace("https://www.amazon.com/ga/p/", "")
+      if (visited.length > 68000) {
+        visited = visited.slice(visited.length - 68000)
+      }
+      GM_setValue(historyKey, visited)
     }
-    visited = GM_getValue(historyKey)
-    if (visited.length > 100000) {
-      visited = visited.substr(visited.length - 100000)
-    }
-    GM_setValue(historyKey, visited)
   }
 
   function nextGiveaway() {
@@ -381,13 +427,25 @@
     var isGiveaway = botFrame.contentWindow.location.href.includes("/ga/p")
 
     if (GM_getValue("running")) {
+      GM_addStyle(
+        "#nav-upnav, header, #giveaway-confetti-header, #giveaway-result-info-bar, #skiplink , .giveaway-footer-container, #navFooter { display: none !important; }"
+      )
+      GM_addStyle("body::-webkit-scrollbar { width: 0 !important }")
+      GM_addStyle(".content-wrapper { height: 100vh;}")
+      GM_addStyle(
+        ".listing-loading-container, .participation-loading-container { display: flex; flex-direction: column; justify-content: center; height: 100vh !important; border: none !important; background-color: #fff !important;}"
+      )
+      GM_addStyle(".spinner { transform: scale(2); margin-top: 0 !important; margin-bottom: 0 !important;}")
+      GM_addStyle(".a-divider-normal {display: none;}")
+      GM_addStyle(".listing-info-desktop .listing-info-container {background: #fff !important; border: none !important;}")
+    
       if (isSignIn) {
         doSignIn()
       } else if (getEl(".participation-need-login a")) {
         getEl(".participation-need-login a").click()
-      } else if (isHomePage) {
-        botFrame.contentWindow.location.href = "https://www.amazon.com/ga/giveaways"
-      } else if (isMainPage) {
+      // } else if (isHomePage) {
+        // botFrame.contentWindow.location.href = "https://www.amazon.com/ga/giveaways"
+      } else if (isMainPage || isHomePage) {
         logger("Searching for giveaways...")
         getGiveaways()
       } else if (isGiveaway) {
@@ -513,20 +571,50 @@
     xhr.send()
   }
 
+  function showBotFrame() {
+    document.querySelector("#botFrameContainer").style.display = "block"
+    document.querySelector("#botOptions").style.display = "none"
+    document.querySelector("#log").style.display = "none"
+    document.querySelector("#showBotFrame").style.color = "#212529"
+    document.querySelector("#showBotFrame").style.fontWeight = "bold"
+    document.querySelector("#showBotFrame").style.borderBottom = "2px solid #e47911"
+    document.querySelector("#showOptions").style.color = "rgba(0,0,0,0.6)"
+    document.querySelector("#showOptions").style.fontWeight = "normal"
+    document.querySelector("#showOptions").style.borderBottom = "0px"
+    document.querySelector("#showLog").style.color = "rgba(0,0,0,0.6)"
+    document.querySelector("#showLog").style.fontWeight = "normal"
+    document.querySelector("#showLog").style.borderBottom = "0px"
+  }
+
   function showLog() {
     document.querySelector("#log").style.display = "flex"
     document.querySelector("#botOptions").style.display = "none"
-    document.querySelector("#showOptions").style.display = "flex"
-    document.querySelector("#clearLog").style.display = "flex"
-    document.querySelector("#showLog").style.display = "none"
+    document.querySelector("#botFrameContainer").style.display = "none"
+    document.querySelector("#showLog").style.color = "#212529"
+    document.querySelector("#showLog").style.fontWeight = "bold"
+    document.querySelector("#showLog").style.borderBottom = "2px solid #e47911"
+    document.querySelector("#showOptions").style.color = "rgba(0,0,0,0.6)"
+    document.querySelector("#showOptions").style.fontWeight = "normal"
+    document.querySelector("#showOptions").style.borderBottom = "0px"
+    document.querySelector("#showBotFrame").style.color = "rgba(0,0,0,0.6)"
+    document.querySelector("#showBotFrame").style.fontWeight = "normal"
+    document.querySelector("#showBotFrame").style.borderBottom = "0px"
+    document.querySelector("#logContent").lastElementChild.scrollIntoView()
   }
 
   function showOptions() {
-    document.querySelector("#showOptions").style.display = "none"
-    document.querySelector("#clearLog").style.display = "none"
-    document.querySelector("#log").style.display = "none"
-    document.querySelector("#showLog").style.display = "flex"
     document.querySelector("#botOptions").style.display = "flex"
+    document.querySelector("#botFrameContainer").style.display = "none"
+    document.querySelector("#log").style.display = "none"
+    document.querySelector("#showOptions").style.color = "#212529"
+    document.querySelector("#showOptions").style.fontWeight = "bold"
+    document.querySelector("#showOptions").style.borderBottom = "2px solid #e47911"
+    document.querySelector("#showLog").style.color = "rgba(0,0,0,0.6)"
+    document.querySelector("#showLog").style.fontWeight = "normal"
+    document.querySelector("#showLog").style.borderBottom = "0px"
+    document.querySelector("#showBotFrame").style.color = "rgba(0,0,0,0.6)"
+    document.querySelector("#showBotFrame").style.fontWeight = "normal"
+    document.querySelector("#showBotFrame").style.borderBottom = "0px"
   }
 
   function getEl(selector) {
@@ -540,6 +628,7 @@
     currentSessionWins = GM_getValue("currentSessionWins")
     currentSessionWins += 1
     GM_setValue("currentSessionWins", currentSessionWins)
+    debugger;
 
     var boxToClick = getEl("#box_click_target")
     if (!boxToClick) {
@@ -790,7 +879,8 @@
       logInfo.appendChild(link)
       link.onclick = e => {
         e.preventDefault()
-        botFrame.contentWindow.location.href = url
+        botFrame.contentWindow.location.href = link.href
+        document.querySelector("#showBotFrame").click()
       }
     }
 
@@ -802,19 +892,20 @@
       logItem = document.createElement("div")
       logItem.appendChild(document.createElement("br"))
     }
-    document.querySelector("#log").appendChild(logItem)
+    document.querySelector("#logContent").appendChild(logItem)
     logItem.scrollIntoView()
 
     let logHistory = GM_getValue("logHistory")
     if (!logHistory) {
       GM_setValue("logHistory", "|" + logItem.outerHTML)
     } else {
+      if (logHistory.split("|").length > 1000) {
+        logHistory = logHistory
+          .split("|")
+          .slice(1)
+          .join("|")
+      }
       GM_setValue("logHistory", logHistory + "|" + logItem.outerHTML)
     }
-    logHistory = GM_getValue("logHistory")
-    if (logHistory.length > 100000) {
-      logHistory = logHistory.substr(logHistory.length - 100000)
-    }
-    GM_setValue("logHistory", logHistory)
   }
 })()
