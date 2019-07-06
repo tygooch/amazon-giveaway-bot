@@ -2,12 +2,13 @@
 //
 // ==UserScript==
 // @name         Amazon Giveaway Bot
-// @version      2.1.2
+// @version      2.2.0
 // @author       Ty Gooch
 // @updateURL    https://github.com/TyGooch/amazon-giveaway-bot/raw/master/amazonGiveawayBot.user.js
 // @description  Automates Amazon giveaway entries
 // @match        https://www.amazon.com/ga/*
 // @match        https://www.amazon.com/ap/signin*
+// @match        https://www.amazon.com/giveaway/*
 // @include      https://www.amazon.com/ga/
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -23,19 +24,19 @@
   var log = []
   var offset = 0
 
-  if (GM_getValue("initialized")) {
-    GM_addStyle(
-      "#nav-upnav, header, #giveaway-confetti-header, #giveaway-result-info-bar, #skiplink , .giveaway-footer-container, #navFooter { display: none !important; }"
-    )
-    GM_addStyle("body::-webkit-scrollbar { width: 0 !important }")
-    GM_addStyle(".content-wrapper { height: 100vh;}")
-    GM_addStyle(
-      ".listing-loading-container, .participation-loading-container { display: flex; flex-direction: column; justify-content: center; height: 100vh !important; border: none !important; background-color: #fff !important;}"
-    )
-    GM_addStyle(".spinner { transform: scale(2); margin-top: 0 !important; margin-bottom: 0 !important;}")
-    GM_addStyle(".a-divider-normal {display: none;}")
-  }
-  if (window.location.href.includes("/ga/giveaways/bot")) {
+  // if (GM_getValue("initialized")) {
+  GM_addStyle(
+    "#nav-upnav, header, #giveaway-confetti-header, #giveaway-result-info-bar, #skiplink , .giveaway-footer-container, #navFooter { display: none !important; }"
+  )
+  GM_addStyle("body::-webkit-scrollbar { width: 0 !important }")
+  GM_addStyle(".content-wrapper { height: 100vh;}")
+  GM_addStyle(
+    ".listing-loading-container, .participation-loading-container { display: flex; flex-direction: column; justify-content: center; height: 100vh !important; border: none !important; background-color: #fff !important;}"
+  )
+  GM_addStyle(".spinner { transform: scale(2); margin-top: 0 !important; margin-bottom: 0 !important;}")
+  GM_addStyle(".a-divider-normal {display: none;}")
+  // }
+  if (window.location.href.includes("/giveaway/")) {
     GM_setValue("initialized", false)
     window.addEventListener("load", init, { capture: false, once: true })
   } else {
@@ -47,6 +48,8 @@
       document.querySelector("#ga-subscribe a").innerText = "Go to bot"
       return
     }
+
+    document.title = "Amazon Giveaway Bot"
 
     GM_setValue("running", false)
     GM_setValue("initialized", true)
@@ -71,7 +74,7 @@
       "  </div>\n" +
       '  <div style="display:flex; padding: 0px 16px; padding-bottom: 7px; justify-content: space-between; border-bottom: 1px solid rgba(34,36,38,.15);">\n' +
       '    <span style="display: inline-block;" id="lifetimeEntries"><b>Giveaways Entered: </b><span style="" id="lifetimeEntriesValue"></span><span id="currentSessionEntries"> (<span style="" id="currentSessionEntriesValue"></span> this session)</span></span>\n' +
-      '    <span style="display: inline-block;" id="totalWins"><b>Giveways Won: </b><span style="" id="totalWinsValue"></span></span>\n' +
+      '    <span style="display: inline-block;" id="totalWins"><b>Giveways Won: </b><span style="" id="totalWinsValue"></span><span id="currentSessionWins"> (<span style="" id="currentSessionWinsValue"></span> this session)</span></span>\n' +
       "  </div>\n" +
       '  <div id="botFrameContainer" style="background-color: #fff; width: 600px; height: 287.5px; padding: 0px;"></div>\n' +
       '  <div id="botOptions" style=" background-color: #fff; width: 100%; display: flex; padding: 16px; border-top: 1px solid rgba(34,36,38,.15); text-align: left; justify-content: space-between;">\n' +
@@ -95,7 +98,7 @@
       '  <div style="margin-top: 5px; border-top: 1px solid rgba(34,36,38,.15); background-color: #fff; display: flex; justify-content: space-between; padding: 16px; text-align: left;">\n' +
       '  <div style="display: flex;" >\n' +
       '  		<button id="showLog" style="display: flex; background-color: #e0e1e2; border: 0; border-radius: .28571429rem; color: rgba(0,0,0,0.6); padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Show Log</button>\n' +
-      '  		<button id="showOptions" style="display: none; background-color: #e0e1e2; border: 0; border-radius: .28571429rem; color: rgba(0,0,0,0.6); padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Hide Log</button>\n' +
+      '  		<button id="showOptions" style="display: none; background-color: #e0e1e2; border: 0; border-radius: .28571429rem; color: rgba(0,0,0,0.6); padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Show Controls</button>\n' +
       '  		<button id="clearLog" style="margin-left: 5px; display: none; background-color: #e0e1e2; border: 0; border-radius: .28571429rem; color: rgba(0,0,0,0.6); padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Clear Log</button>\n' +
       "  </div>\n" +
       '  		<button id="run" style="background-color: #2185d0; border: 0; border-radius: .28571429rem; color: #fff; padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Start Bot</button>\n' +
@@ -156,6 +159,7 @@
     document.querySelector("#lifetimeEntriesValue").innerHTML = GM_getValue("lifetimeEntries")
     document.querySelector("#totalWinsValue").innerHTML = GM_getValue("totalWins")
     document.querySelector("#currentSessionEntries").style.visibility = "hidden"
+    document.querySelector("#currentSessionWins").style.visibility = "hidden"
     document.querySelector("#twoCaptchaKey").style.border = "1px solid #ced4da"
     document.body.style.overflow = "hidden"
 
@@ -178,12 +182,14 @@
 
       GM_setValue("running", true)
       GM_setValue("currentSessionEntries", 0)
+      GM_setValue("currentSessionWins", 0)
       historyKey = document.querySelector("#amazonEmail").value + "history"
       logger("Bot started")
 
       document.querySelector("#run").style.display = "none"
       document.querySelector("#stop").style.display = "block"
       document.querySelector("#currentSessionEntries").style.visibility = "visible"
+      document.querySelector("#currentSessionWins").style.visibility = "visible"
       document.querySelector("#botOptions").style.display = "none"
       document.querySelector("#showLog").click()
       if (!GM_getValue("currentAccount") || !GM_getValue("currentAccount").includes(document.querySelector("#amazonEmail").value)) {
@@ -209,6 +215,7 @@
         GM_setValue("disableKindle", document.querySelector("#disableKindle").checked)
 
         document.querySelector("#currentSessionEntriesValue").innerHTML = GM_getValue("currentSessionEntries")
+        document.querySelector("#currentSessionWinsValue").innerHTML = GM_getValue("currentSessionWins")
         document.querySelector("#lifetimeEntriesValue").innerHTML = GM_getValue("lifetimeEntries")
         document.querySelector("#totalWinsValue").innerHTML = GM_getValue("totalWins")
 
@@ -235,6 +242,7 @@
 
       GM_setValue("running", false)
       document.querySelector("#currentSessionEntries").style.visibility = "hidden"
+      document.querySelector("#currentSessionWins").style.visibility = "hidden"
       document.querySelector("#stop").style.display = "none"
       document.querySelector("#run").style.display = "block"
     }
@@ -528,6 +536,9 @@
     logger("Giveaway won!", "success")
     var wins = GM_getValue("totalWins")
     GM_setValue("totalWins", wins + 1)
+    currentSessionWins = GM_getValue("currentSessionWins")
+    currentSessionWins += 1
+    GM_setValue("currentSessionWins", currentSessionWins)
 
     var boxToClick = getEl("#box_click_target")
     if (!boxToClick) {

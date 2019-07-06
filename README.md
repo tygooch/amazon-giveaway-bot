@@ -19,7 +19,7 @@ To install Amazon Giveaway Bot, click [here](https://github.com/TyGooch/amazon-g
 
 ## Usage
 
-Once installed, ensure Tampermonkey is enabled and navigate to [https://www.amazon.com/ga/giveaways/bot](https://www.amazon.com/ga/giveaways/bot). Configure the options to your prefences and click start. The bot will run inside of an iframe until you click stop or close the page.
+Once installed, ensure Tampermonkey is enabled and navigate to [https://www.amazon.com/giveaway/](https://www.amazon.com/giveaway/). Configure the options to your prefences and click start. The bot will run inside of an iframe until you click stop or close the page.
 
 ## Features
 
