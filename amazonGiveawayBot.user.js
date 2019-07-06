@@ -23,6 +23,7 @@
   var botFrame
   var log = []
   var offset = 0
+  GM_setValue("initialized", false)
 
   // if (GM_getValue("initialized")) {
   GM_addStyle(
