@@ -12,6 +12,7 @@
 // @grant        GM_addStyle
 // @grant        GM_notification
 // @grant        unsafeWindow
+// @grant        window.focus
 // @run-at       document-start
 // @noframes
 // ==/UserScript==
@@ -24,10 +25,7 @@
   let offset = 0
   let csrfToken
   let autoscroll = true
-  // GM_setValue("initialized", false)
 
-  // if (GM_getValue("initialized")) {
-  // }
   if (window.location.href.includes("/giveaway/")) {
     GM_setValue("initialized", false)
     window.addEventListener("load", init, { capture: false, once: true })
@@ -61,20 +59,13 @@
     let controlsTemplate =
       '<div id="container"\n' +
       "  style=\"font-family: Roboto,\\'Helvetica Neue\\',Helvetica,Arial,sans-serif;position: relative; min-width: 600px; margin: auto auto; color: #212529; background-color: #fff; border: 1px solid transparent; border-radius: .28571429rem; overflow: none; z-index: 9999; text-align: left; display: flex; flex-direction: column; justify-content: space-between;\">\n" +
-      // "  <div>\n" +
       '    <div style="border-bottom: 1px solid #ddd; margin-top: 0; text-align: center;"><img style="width: 600px;" src="https://svgshare.com/i/Dwc.svg" /></div>\n' +
-      // '  <div style="display: flex; padding: 16px; justify-content: space-between;">\n' +
-      // "  </div>\n" +
       '  <div style="display: flex; background-color: #fff; margin-bottom: 5px; border-bottom: 1px solid #ddd;" >\n' +
-      '  		<button id="showOptions" style="display: flex; outline: 0px !important; background-color: transparent; border: 0px; border-bottom: 2px solid #e47911; color: #212529; padding: .78571429em 1em; min-height: 1em; line-height: 1em; font-size: 1rem; font-weight: bold;">Settings</button>\n' +
       '  		<button id="showLog" style="display: flex; outline: 0px !important; background-color: transparent; border: 0px; border-bottom: 0px solid #e47911; color: #212529; padding: .78571429em 1em; min-height: 1em; line-height: 1em; font-size: 1rem;">Activity Log</button>\n' +
       '  		<button id="showBotFrame" style="display: flex; outline: 0px !important; background-color: transparent; border: 0px; border-bottom: 0px solid #e47911; color: #212529; padding: .78571429em 1em; min-height: 1em; line-height: 1em; font-size: 1rem;">Browser View</button>\n' +
-      // '  		<span id="" style="display: flex; outline: 0px !important; background-color: transparent; border: 0px; color: rgba(0,0,0,0.6); flex: 1;"></span>\n' +
+      '  		<span id="" style="display: flex; outline: 0px !important; background-color: transparent; border: 0px; color: rgba(0,0,0,0.6); flex: 1;"></span>\n' +
+      '  		<button id="showOptions" style="display: flex; outline: 0px !important; background-color: transparent; border: 0px; border-bottom: 2px solid #e47911; color: #212529; padding: .78571429em 1em; min-height: 1em; line-height: 1em; font-size: 1rem; font-weight: bold;">Settings</button>\n' +
       "  </div>\n" +
-      // '  <div style="display:flex; padding: 0px 16px; padding-bottom: 7px; justify-content: space-between; border-bottom: 1px solid #ddd;">\n' +
-      // '    <span style="display: inline-block;" id="lifetimeEntries"><b>Giveaways Entered: </b><span style="" id="lifetimeEntriesValue"></span><span id="currentSessionEntries"> (<span style="" id="currentSessionEntriesValue"></span> this session)</span></span>\n' +
-      // '    <span style="display: inline-block;" id="totalWins"><b>Giveways Won: </b><span style="" id="totalWinsValue"></span><span id="currentSessionWins"> (<span style="" id="currentSessionWinsValue"></span> this session)</span></span>\n' +
-      // "  </div>\n" +
       '  <div id="botOptions" style=" background-color: #fff; width: 100%; display: flex; flex-direction: column; padding: 7px 16px; height: 400px; width: 600px; text-align: left; overflow: scroll;">\n' +
       '     <div style="font-size: 17px; font-weight: 700; margin-bottom: 10px; border-bottom: 1px solid #eee;">Amazon Account</div>\n' +
       '	    <div style="display: flex; padding-bottom:10px;">\n' +
@@ -83,23 +74,18 @@
       " 	  	</div>\n" +
       '         <div style="padding-left: 10px;"><label for="amazonPassword">Passsword</label><input id="amazonPassword" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important; border: 1px solid rgb(206, 212, 218) !important;" name="amazonPassword" type="password" placeholdertype="Amazon Password"></input></div>\n' +
       "	  	</div>\n" +
-      '     <div style="font-size: 17px; font-weight: 700; margin-bottom: 10px; border-bottom: 1px solid #eee;">Captcha Support</div>\n' +
+      '     <div style="font-size: 17px; font-weight: 700; margin-bottom: 10px; border-bottom: 1px solid #eee;">Captcha Solving</div>\n' +
       '       <div style="padding-bottom: 20px;"><label for="twoCaptchaKey">2Captcha Key <a style="font-weight: 400;" href="https://2captcha.com?from=7493321">(referral link)</a></label><input id="twoCaptchaKey" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important;" name="twoCaptchaKey" type="text" placeholdertype="Enter your key here"></input></div>\n' +
       '     <div style="font-size: 17px; font-weight: 700; margin-bottom: 10px; border-bottom: 1px solid #eee;">Giveaway Filter</div>\n' +
       '	    <div style="display: flex; padding-bottom:10px;">\n' +
       '	      <div style="display: flex; flex-direction: column;">\n' +
       '	    	  <div style="padding-bottom: 10px;">\n' +
-      // // '	    	    <div><input id="disableVideo" name="disableVideo" type="checkbox"></input><span> Requires Video</span></div>\n' +
       ' 	        <div><input id="disableFollow" name="disableFollow" type="checkbox"></input><span> Requires Follow</span></div>\n' +
       '     	    <div><input id="disableKindle" name="disableKindle" type="checkbox"></input><span> Kindle Books</span></div>\n' +
       "	  	    </div>\n" +
       "	  	  </div>\n" +
       "	  	</div>\n" +
-      '     <div style="font-size: 17px; font-weight: 700; margin-bottom: 10px; border-bottom: 1px solid #eee;">Shipping Address</div>\n' +
-      '	    <div style="display: flex;">\n' +
-      '	      <div style="display: flex; flex-direction: column;">\n' +
-      '       	<div><input id="defaultAddress" name="defaultAddress" type="checkbox" checked="true"><span> Use account default if possible</span></input></div>\n' +
-      // '     	  <div><input id="customAddress" name="customAddress" type="radio"><span> </span></input></div>\n' +
+      '     <div style="font-size: 17px; font-weight: 700; border-bottom: 1px solid #eee;">Shipping Address</div>\n' +
       '	        <div id="addressForm" style="display: flex; flex-direction: column;">\n' +
       '             <div style="padding: 10px 0px;"><label for="fullName">Full Name</label><input id="fullName" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important; border: 1px solid rgb(206, 212, 218) !important;" name="fullName" type="text"></input></div>\n' +
       '             <div style="padding-bottom: 10px;"><label for="street1">Street Address</label><input id="street1" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important; border: 1px solid rgb(206, 212, 218) !important;" name="street1" type="text" placeholder="Street and number, P.O. box, c/o."></input></div>\n' +
@@ -108,31 +94,22 @@
       '             <div style="padding-bottom: 10px;"><label for="state">State / Province / Region</label><input id="state" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important; border: 1px solid rgb(206, 212, 218) !important;" name="state" type="text"></input></div>\n' +
       '             <div style="padding-bottom: 10px;"><label for="zip">Zip Code</label><input id="zip" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important; border: 1px solid rgb(206, 212, 218) !important;" name="zip" type="text"></input></div>\n' +
       '             <div style="padding-bottom: 10px;"><label for="phone">Phone number</label><input id="phone" style="width: 250px; box-shadow: 0 0 0 100px #fff inset !important; border: 1px solid rgb(206, 212, 218) !important;" name="phone" type="text"></input></div>\n' +
-      "	  	    </div>\n" +
       "	  	  </div>\n" +
-      "	  	</div>\n" +
       "  </div>\n" +
       '  <div id="log" style="position: relative; width: 600px; display: none; flex-direction: column;  background-color: #fff; text-align: left; overflow: scroll; height: 400px; max-height: 400px;">\n' +
       '    <div id="logContent" style="position: relative; width: 600px; display: flex; flex-direction: column; background-color: #fff; padding: 5px 16px; text-align: left; overflow: scroll; height: 400px; max-height: 400px;"></div>\n' +
-      '  	 <button id="clearLog" style="display: none; position: absolute; top: 0px; right: 10px; width: 50px;">Clear</button>\n' +
+      '  	 <button id="clearLog" style="display: none; position: absolute; bottom: 5px; right: 10px; width: 50px;">Clear</button>\n' +
       '  	 <a><svg id="autoscroll" style="display: none; position: absolute; bottom: 5px; left: calc(50% - 25px);" class="a" xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 25 25"><defs><style>.cls-1{fill:#2196f3;}.cls-2{fill:#fff;}</style></defs><title>Untitled-1</title><circle class="cls-1" cx="12.5" cy="12.5" r="12.5"/><path class="cls-2" d="M20.5,12.5l-1.4-1.41-5.6,5.58V4.5h-2V16.67L5.93,11.08,4.5,12.5l8,8Z" transform="translate(0 0)"/></svg></a>\n' +
       "  </div>\n" +
       '  <div id="botFrameContainer" style="display: none; background-color: #fff; border-bottom: 0px solid #ddd; width: 600px; height: 400px; max-height: 400px; padding: 0px; overflow: scroll;"></div>\n' +
-      // '  <div id="" style="flex: 1; position: flex-end;">\n' +
       '  <div style=" border-top: 1px solid #ddd; background-color: #fff; display: flex; justify-content: space-between; padding: 16px; text-align: left;">\n' +
       '  <div style="display:flex; flex-direction: column; justify-content: space-apart; border-top: 0px solid #ddd; ">\n' +
       '    <span style="display: flex;" id="totalWins"><b>Giveways Won: </b><span style="margin: 0px 5px;" id="totalWinsValue"></span><span style="display: none;" id="currentSessionWins"> (<span style="" id="currentSessionWinsValue"></span> this session)</span></span>\n' +
       '    <span style="display: flex;" id="lifetimeEntries"><b>Giveaways Entered: </b><span style="margin: 0px 5px;" id="lifetimeEntriesValue"></span><span id="currentSessionEntries"> (<span style="" id="currentSessionEntriesValue"></span> this session)</span></span>\n' +
       "  </div>\n" +
-      // '  <div style="display: flex;" >\n' +
-      // '  		<button id="showLog" style="display: flex; background-color: #e0e1e2; border: 0; border-radius: .28571429rem; color: rgba(0,0,0,0.6); padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Log</button>\n' +
-      // '  		<button id="showOptions" style="display: none; background-color: #e0e1e2; border: 0; border-radius: .28571429rem; color: rgba(0,0,0,0.6); padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Settings</button>\n' +
-      // '  		<button id="clearLog" style="margin-left: 5px; display: none; background-color: #e0e1e2; border: 0; border-radius: .28571429rem; color: rgba(0,0,0,0.6); padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Clear Log</button>\n' +
-      // "  </div>\n" +
       '  		<button id="run" style="background-color: #2185d0; border: 0; border-radius: .28571429rem; color: #fff; padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Start Bot</button>\n' +
       '  		<button id="stop" style="background-color: #d10919; border: 0; border-radius: .28571429rem; color: #fff;  padding: .78571429em 1.5em; min-height: 1em; line-height: 1em; font-size: 1rem;">Stop Bot</button>\n' +
       "  </div>\n" +
-      // "  </div>\n" +
       "</div>\n"
 
     let controlsHTML = document.createElement("div")
@@ -155,7 +132,6 @@
       main()
     }
     botFrame.id = "botFrame"
-    // botFrame.sandbox = "allow-same-origin allow-scripts allow-pointer-lock allow-forms"
     botFrame.style.width = "1200px"
     botFrame.style.height = "800px"
     botFrame.style.transform = "scale(0.5)"
@@ -180,11 +156,9 @@
         document.querySelector("#clearLog").style.display = "flex"
       })
     }
-    // logger("Initialized Amazon Giveaway Bot v3.0.0")
 
     document.querySelector("#run").style.display = GM_getValue("running") ? "none" : "block"
     document.querySelector("#stop").style.display = GM_getValue("running") ? "block" : "none"
-    // // document.querySelector("#disableVideo").checked = GM_getValue("disableVideo")
     document.querySelector("#disableFollow").checked = GM_getValue("disableFollow")
     document.querySelector("#disableKindle").checked = GM_getValue("disableKindle")
 
@@ -202,28 +176,14 @@
       getAddress()
     }
 
-    document.querySelector("#defaultAddress").onclick = function() {
-      // document.querySelector("#addressForm").style.display = "none"
-      GM_setValue("useDefaultAddress", document.querySelector("#defaultAddress").checked)
-      // document.querySelector("#customAddress").checked = false
-    }
-
-    // document.querySelector("#customAddress").onclick = function() {
-    //   document.querySelector("#addressForm").style.display = "flex"
-    //   document.querySelector("#defaultAddress").checked = false
-    // }
-
     document.querySelector("#showBotFrame").onclick = function() {
       document.querySelector("#botFrameContainer").style.display = "block"
       document.querySelector("#botOptions").style.display = "none"
       document.querySelector("#log").style.display = "none"
-      // document.querySelector("#showBotFrame").style.color = "#212529"
       document.querySelector("#showBotFrame").style.fontWeight = "bold"
       document.querySelector("#showBotFrame").style.borderBottom = "2px solid #e47911"
-      // document.querySelector("#showOptions").style.color = "rgba(0,0,0,0.6)"
       document.querySelector("#showOptions").style.fontWeight = "normal"
       document.querySelector("#showOptions").style.borderBottom = "0px"
-      // document.querySelector("#showLog").style.color = "rgba(0,0,0,0.6)"
       document.querySelector("#showLog").style.fontWeight = "normal"
       document.querySelector("#showLog").style.borderBottom = "0px"
     }
@@ -232,13 +192,10 @@
       document.querySelector("#log").style.display = "flex"
       document.querySelector("#botOptions").style.display = "none"
       document.querySelector("#botFrameContainer").style.display = "none"
-      // document.querySelector("#showLog").style.color = "#212529"
       document.querySelector("#showLog").style.fontWeight = "bold"
       document.querySelector("#showLog").style.borderBottom = "2px solid #e47911"
-      // document.querySelector("#showOptions").style.color = "rgba(0,0,0,0.6)"
       document.querySelector("#showOptions").style.fontWeight = "normal"
       document.querySelector("#showOptions").style.borderBottom = "0px"
-      // document.querySelector("#showBotFrame").style.color = "rgba(0,0,0,0.6)"
       document.querySelector("#showBotFrame").style.fontWeight = "normal"
       document.querySelector("#showBotFrame").style.borderBottom = "0px"
       document.querySelector("#logContent").lastElementChild.scrollIntoView()
@@ -248,13 +205,10 @@
       document.querySelector("#botOptions").style.display = "flex"
       document.querySelector("#botFrameContainer").style.display = "none"
       document.querySelector("#log").style.display = "none"
-      // document.querySelector("#showOptions").style.color = "#212529"
       document.querySelector("#showOptions").style.fontWeight = "bold"
       document.querySelector("#showOptions").style.borderBottom = "2px solid #e47911"
-      // document.querySelector("#showLog").style.color = "rgba(0,0,0,0.6)"
       document.querySelector("#showLog").style.fontWeight = "normal"
       document.querySelector("#showLog").style.borderBottom = "0px"
-      // document.querySelector("#showBotFrame").style.color = "rgba(0,0,0,0.6)"
       document.querySelector("#showBotFrame").style.fontWeight = "normal"
       document.querySelector("#showBotFrame").style.borderBottom = "0px"
     }
@@ -285,9 +239,6 @@
       autoscroll = true
     }
 
-    // document.querySelector("#disableVideo").onclick = function() {
-    // // GM_setValue("disableVideo", document.querySelector("#disableVideo").checked)
-    // }
     document.querySelector("#disableFollow").onclick = function() {
       GM_setValue("disableFollow", document.querySelector("#disableFollow").checked)
     }
@@ -304,8 +255,6 @@
         return
       }
 
-      GM_notification("Now running", "Amazon Giveaway Bot", "")
-
       GM_setValue("running", true)
       GM_setValue("currentSessionEntries", 0)
       GM_setValue("currentSessionWins", 0)
@@ -316,13 +265,9 @@
       document.querySelectorAll("#addressForm input").forEach(el => {
         address[el.id] = el.value
       })
-      // console.log(address)
       GM_setValue(accountName + "shippingAddress", JSON.stringify(address))
-      // console.log(JSON.parse(GM_setValue(accountName + "shippingAddress")))
 
-      // if (document.querySelector("#twoCaptchaKey").value.length > 0) {
       GM_setValue("twoCaptchaKey", document.querySelector("#twoCaptchaKey").value)
-      // }
 
       document.querySelector("#run").style.display = "none"
       document.querySelector("#stop").style.display = "block"
@@ -336,11 +281,7 @@
         offset = 0
         botFrame.contentWindow.location.href = "https://www.amazon.com/gp/navigation/redirector.html/ref=sign-in-redirect"
       } else {
-        // logger(GM_getValue("currentAccount") + " already signed in")
-        // csrfToken = botFrame.contentWindow.P.pageContext.csrfToken
         botFrame.contentWindow.location.href = "https://www.amazon.com/ga/giveaways"
-        // logger("Searching Giveaways...")
-        // getGiveaways()
       }
 
       window.addEventListener(
@@ -358,7 +299,6 @@
 
     document.querySelector("#stop").onclick = function() {
       logger("Bot stopped")
-      GM_notification("Stopped", "Amazon Giveaway Bot")
 
       GM_setValue("running", false)
       document.querySelector("#currentSessionEntries").style.visibility = "hidden"
@@ -459,11 +399,7 @@
             canAdd = false
           }
           if (item.participationRequirement) {
-            if (
-              // (item.participationRequirement.includes("WATCH") && GM_getValue("disableVideo")) ||
-              item.participationRequirement.includes("FOLLOW") &&
-              GM_getValue("disableFollow")
-            ) {
+            if (item.participationRequirement.includes("FOLLOW") && GM_getValue("disableFollow")) {
               canAdd = false
             }
           }
@@ -472,14 +408,19 @@
           }
         })
         if (allowedGiveaways.length > 0) {
-          // logger(allowedGiveaways.length + " found")
           giveaways = allowedGiveaways
           nextGiveaway()
         } else {
-          if ((offset + 1) * 24 < data.totalGiveaways) {
+          if (offset * 24 < data.totalGiveaways) {
             getGiveaways()
           } else {
+            let audio = new Audio("https://www.myinstants.com/media/sounds/ding-sound-effect_2.mp3")
+            audio.play()
             logger("All available giveaways have been entered for this account. Switch accounts or come back later to enter more.", "error")
+            GM_notification(
+              "All available giveaways have been entered for this account. Switch accounts or come back later to enter more.",
+              "Giveaway Bot Stopped"
+            )
             document.querySelector("#stop").click()
           }
         }
@@ -505,10 +446,7 @@
       return
     } else if (giveaways && giveaways.length > 0) {
       let next = giveaways.pop()
-      // setTimeout(() => {
       lazyEnter(next)
-      // }, 1000)
-      // botFrame.contentWindow.location.href = next
     } else {
       logger("Searching Giveaways...")
       getGiveaways()
@@ -539,11 +477,7 @@
           logger("Searching Giveaways...")
           getGiveaways()
         }
-        // csrfToken = botFrame.contentWindow.P.pageContext.csrfToken
-        // logger("Searching Giveaways...")
-        // getGiveaways()
       } else if (isGiveaway) {
-        // lazyEnter(botFrame.contentWindow.location.href)
       }
     }
   }
@@ -671,36 +605,39 @@
 
   function claimWin(giveawayId) {
     logger("Giveaway won!", "success")
+    let audio = new Audio("https://www.myinstants.com/media/sounds/cash-register-sound-fx_HgrEcyp.mp3")
+    audio.play()
     botFrame.contentWindow.location.href = "https://www.amazon.com/ga/p/" + giveawayId
-    if (getEl(".prize-image-container img").src) {
-      GM_notification("Giveaway won!\n" + "https://www.amazon.com/ga/p/" + giveawayId, "Amazon Giveaway Bot", getEl(".prize-image-container img").src, true)
-    } else {
-      GM_notification("Giveaway won!\n" + "https://www.amazon.com/ga/p/" + giveawayId, "Amazon Giveaway Bot", "", true)
-    }
-    // if (getEl("body").textContent.includes("You will receive a confirmation email from Amazon.")) {
-    //   nextGiveaway()
-    // }
+    fetch("https://www.amazon.com/gax/-/pex/api/v1/giveaway/" + giveawayId, {
+      credentials: "include",
+      headers: {
+        "x-amzn-csrf": csrfToken
+      },
+      body: null,
+      method: "GET",
+      mode: "cors"
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log(data)
+        GM_notification({
+          text: data.prize.name + " (" + data.prize.priceValue + ")",
+          title: "Giveaway Won!",
+          image: data.prize.imageUrl,
+          highlight: true,
+          timeout: 0,
+          onclick: () => {
+            window.focus()
+            botFrame.contentWindow.location.href = "https://www.amazon.com/ga/p/" + giveawayId
+            document.querySelector("#showBotFrame").click()
+          }
+        })
+      })
     let wins = GM_getValue("totalWins")
     GM_setValue("totalWins", wins + 1)
     let currentSessionWins = GM_getValue("currentSessionWins")
     GM_setValue("currentSessionWins", currentSessionWins + 1)
     updateUI()
-    // alert("WON")
-
-    // let boxToClick = getEl("#box_click_target")
-    // if (!boxToClick) {
-    //   boxToClick = getEl(".box-click-area")
-    // }
-    // if (boxToClick) {
-    //   boxToClick.click()
-    // } else {
-    //   if (getEl(".qa-amazon-follow-button")) {
-    //     getEl(".qa-amazon-follow-button").click()
-    //   }
-    //   if (getEl(".follow-author-continue-button")) {
-    //     getEl(".follow-author-continue-button").click()
-    //   }
-    // }
 
     let winHistory = GM_getValue("winHistory")
     if (!winHistory) {
@@ -715,10 +652,10 @@
     GM_setValue("winHistory", winHistory)
 
     let clickButton = setInterval(() => {
+      console.log(botFrame.contentWindow.location.href)
       if (!GM_getValue("running")) {
         return
       }
-      // if (!getEl('input[name="ShipMyPrize"]')) {
       if (getEl(".newAddress input")) {
         getEl(".newAddress input").click()
       }
@@ -736,31 +673,19 @@
         getEl("#enterAddressPhoneNumber").value = address.phone
         getEl("#addAddressButton").click()
       }
-      // }
-      // else {
-      // if (getEl(".shipAddressId input")) {
-      //   getEl(".shipAddressId input").click()
-      // }
       if (getEl('input[name="ShipMyPrize"]')) {
-        // clearInterval(clickButton)
         getEl('input[name="ShipMyPrize"]').click()
       }
       if (getEl("#continue-button input")) {
         getEl("#continue-button input").click()
       }
 
-      // if (getEl("#lu_co_ship_box")) {
-      //   getEl("#lu_co_ship_box").click()
-      // }
       if (getEl('input[name="ClaimMyPrize"]')) {
-        // clearInterval(clickButton)
         getEl('input[name="ClaimMyPrize"]').click()
       }
-      // }
     }, 1000)
     setTimeout(() => {
       clearInterval(clickButton)
-      // nextGiveaway()
       botFrame.contentWindow.location.href = "https://www.amazon.com/ga/giveaways"
     }, 30000)
   }
@@ -778,9 +703,7 @@
       return
     }
     logger("Loading", "link", url)
-    // if (botFrame.contentWindow.P.pageContext && botFrame.contentWindow.P.pageContext.csrfToken) {
     csrfToken = botFrame.contentWindow.P.pageContext.csrfToken
-    // }
     let giveawayId = url.split("/p/")[1].split("?")[0]
 
     fetch(`https://www.amazon.com/gax/-/pex/api/v1/giveaway/${giveawayId}/participation`, {
@@ -799,11 +722,7 @@
     })
       .then(res => res.json())
       .then(data => {
-        // addToHistory(url)
-        // if (data.success.status === "won") {
-        //   claimWin(giveawayId)
-        //   return
-        // } else if (data.success.status !== "notParticipated") {
+        console.log(data.success.status)
         if (data.success.status !== "notParticipated") {
           addToHistory(giveawayId)
           logger("Giveaway " + data.success.status)
@@ -836,16 +755,10 @@
         }
       })
       .catch(err => {
-        // setTimeout(() => {
         logger(err)
 
-        // if (getEl(".participation-need-login a")) {
-        //   getEl(".participation-need-login a").click()
-        // } else {
         addToHistory(giveawayId)
         nextGiveaway()
-        // }
-        // }, 1000)
       })
   }
 
@@ -870,8 +783,13 @@
     })
       .then(res => res.json())
       .then(data => {
+        console.log(data.success.status)
         addToHistory(giveawayId)
         document.querySelector("#logContent").lastElementChild.lastElementChild.textContent = "Giveaway " + data.success.status
+        let newHistory = GM_getValue("logHistory").split("|")
+        newHistory[newHistory.length - 1] = newHistory[newHistory.length - 1].replace("Submitting entry...", "Giveaway " + data.success.status)
+
+        GM_setValue("logHistory", newHistory.join("|"))
         recordEntry()
         if (data.success.status !== "lucky") {
           if (needUnfollow) {
@@ -902,7 +820,6 @@
         clearInterval(unfollowAll)
         clearTimeout(timeout)
         botFrame.contentWindow.location.replace("https://www.amazon.com/ga/giveaways")
-        // nextGiveaway()
       }
       if (getEl(".a-switch-row.a-active input")) {
         botFrame.contentDocument.querySelectorAll(".a-switch-row.a-active input").forEach(el => el.click())
@@ -913,13 +830,12 @@
       if (unfollowAll) {
         clearInterval(unfollowAll)
       }
-      nextGiveaway()
+      botFrame.contentWindow.location.replace("https://www.amazon.com/ga/giveaways")
     }, 20000)
   }
 
   function logger(str, style = "info", url) {
     document.querySelector("#clearLog").style.display = "flex"
-    // logger(str)
     console.log(str)
     if (str.toString().includes("TypeError")) {
       str = "Entry not allowed"
@@ -951,7 +867,6 @@
       let link = document.createElement("a")
       link.textContent = url
       link.href = url
-      // link.style.color = "#0066c0 !important"
       link.style.marginLeft = "5px"
       logInfo.appendChild(link)
       link.onclick = e => {
@@ -969,7 +884,7 @@
       logItem = document.createElement("div")
       logItem.appendChild(document.createElement("br"))
     }
-    if (document.querySelector("#logContent").childElementCount > 10000) {
+    if (document.querySelector("#logContent").childElementCount > 1000) {
       document.querySelector("#logContent").firstElementChild.remove()
     }
     document.querySelector("#logContent").appendChild(logItem)
@@ -981,12 +896,11 @@
     if (!logHistory) {
       GM_setValue("logHistory", logItem.outerHTML)
     } else {
-      if (logHistory.split("|").length > 10000) {
+      if (logHistory.split("|").length > 1000) {
         logHistory = logHistory
           .split("|")
           .slice(1)
           .join("|")
-        // document.querySelector("#logContent").firstElementChild.remove()
       }
       GM_setValue("logHistory", logHistory + "|" + logItem.outerHTML)
     }
