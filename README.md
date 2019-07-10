@@ -25,8 +25,12 @@ Once installed, ensure Tampermonkey is enabled and navigate to [https://www.amaz
 
 ### CAPTCHA Solving
 
-Support for solving captchas using the 2captcha API is now available. If you aren't a current customer please consider signing up using my [referral link](https://2captcha.com?from=7493321). Once you have a key, paste it into the 2Captcha API Key field in the control panel and you're good to go.
+Support for solving captchas using the 2captcha API is now available. If you aren't a current customer please consider signing up using my [referral link](https://2captcha.com?from=7493321). Once you have a key, paste it into the 2Captcha API Key field in the settings panel and you're good to go.
 
 ### Multiple Accounts
 
 Users can use different Amazon accounts on the same machine. History of entered giveaways is stored locally for each account to avoid revisiting giveaways previously entered.
+
+### Notifications
+
+When you win a giveaway or all the current giveaways are entered you will be notified via a desktop notification.
