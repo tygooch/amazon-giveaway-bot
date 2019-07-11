@@ -1,0 +1,36 @@
+{
+  "name": "amazon-giveaway-bot",
+  "version": "3.0.0",
+  "description": "Automates Amazon giveaway entries",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack",
+    "start:dev": "webpack-dev-server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TyGooch/amazon-giveaway-bot.git"
+  },
+  "keywords": [
+    "amazon",
+    "giveaway",
+    "bot",
+    "giveaway",
+    "script",
+    "tampermonkey"
+  ],
+  "author": "Ty Gooch <gooch.ty@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/TyGooch/amazon-giveaway-bot/issues"
+  },
+  "homepage": "https://github.com/TyGooch/amazon-giveaway-bot#readme",
+  "devDependencies": {
+    "webpack": "^4.35.3",
+    "webpack-cli": "^3.3.5",
+    "webpack-userscript": "^2.3.0"
+  },
+  "dependencies": {
+    "webpack-dev-server": "^3.7.2"
+  }
+}
