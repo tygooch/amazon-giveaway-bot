@@ -141,7 +141,7 @@
     document.querySelector("#botFrameContainer").appendChild(botFrame)
 
     let logHistory = GM_getValue("logHistory")
-    if (logHistory !== "") {
+    if (logHistory && logHistory !== "") {
       logHistory.split("|").forEach(el => {
         let node = document.createElement("div")
         node.innerHTML = el
