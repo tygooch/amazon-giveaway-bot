@@ -6,7 +6,7 @@ module.exports = {
   mode: dev ? 'development' : 'production',
   entry: path.resolve(__dirname, 'src', 'index.js'),
   output: {
-    path: path.resolve(__dirname, 'dist'),
+    path: path.resolve(__dirname),
     filename: 'amazonGiveawayBot.user.js',
   },
   devServer: {
@@ -15,10 +15,12 @@ module.exports = {
   plugins: [
     new WebpackUserscript({
       headers: {
-        name: 'amazon-giveaway-bot',
+        name: dev ? 'Amazon Giveaway Bot (dev)' : 'Amazon Giveaway Bot',
         version: dev ? `[version]-build.[buildNo]` : `[version]`,
         description: 'Automates Amazon giveaway entries',
-        updateURL: 'https://github.com/TyGooch/amazon-giveaway-bot/raw/master/dist/amazonGiveawayBot.user.js',
+        updateURL: dev
+          ? path.join(__dirname, 'dist', 'amazonGiveawayBot.user.js')
+          : 'https://github.com/TyGooch/amazon-giveaway-bot/raw/master/amazonGiveawayBot.user.js',
         match: 'https://www.amazon.com/giveaway/*',
         grant: ['GM_setValue', 'GM_getValue', 'GM_addStyle', 'GM_notification', 'unsafeWindow', 'window.focus'],
         'run-at': 'document-start',

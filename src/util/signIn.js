@@ -24,8 +24,10 @@ export function doSignIn() {
       } else {
         clearInterval(signIn)
         if (botFrame.contentDocument.querySelector('#ap_email')) {
+          // log('Entering email')
           botFrame.contentDocument.querySelector('#ap_email').value = document.querySelector('#amazonEmail').value
         }
+        log('Signing in ' + document.querySelector('#amazonEmail').value)
         botFrame.contentDocument.querySelector('#ap_password').value = document.querySelector('#amazonPassword').value
         botFrame.contentDocument.querySelector('#signInSubmit').click()
         // log(document.querySelector('#amazonEmail').value + ' signed in')
@@ -33,12 +35,13 @@ export function doSignIn() {
       }
     } else if (botFrame.contentDocument.querySelector('.cvf-account-switcher-spacing-base a')) {
       clearInterval(signIn)
-      log('Switching accounts')
+      // log('Signing In ')
       let accountAdded = false
       botFrame.contentDocument.querySelectorAll('.a-section.cvf-account-switcher-spacing-base a').forEach(el => {
         if (el.textContent.includes(document.querySelector('#amazonEmail').value)) {
           accountAdded = true
           GM_setValue('currentAccount', document.querySelector('#amazonEmail').value)
+          log('Signing in ' + document.querySelector('#amazonEmail').value)
           el.click()
         } else if (el.textContent.includes('Add account') && !accountAdded) {
           log('Adding account ' + document.querySelector('#amazonEmail').value)

@@ -2,13 +2,13 @@ import { UI_TEMPLATE } from './util/uiTemplate'
 // // import { getAddress, saveAddress, fillAddressForm } from './util/address'
 import { getAddress, saveAddress } from './util/address'
 // // import { solveCaptcha, sendCaptcha, getBase64Image } from './util/captcha'
-import { nextGiveaway } from './util/giveaways'
+import { nextGiveaway } from './util/giveaway'
 // // import { getGiveaways, nextGiveaway, loadGiveaway, enterGiveaway, addToHistory, updateUI, updateEntryCount } from './util/giveaways'
 import { log, restoreLog } from './util/logger'
 import { doSignIn } from './util/signIn'
-import { claimWin, displayWinnings } from './util/wins'
+import { claimWin, displayWinnings } from './util/win'
 
-let autoscroll
+window.autoscroll = true
 let botFrame
 // let log = []
 // let csrfToken
@@ -32,6 +32,10 @@ export function main() {
   } else if (location.includes('/ga/giveaways')) {
     window.csrfToken = botFrame.contentWindow.P.pageContext.csrfToken
     nextGiveaway()
+  } else if (location.includes('/ga/p')) {
+    if (botFrame.contentDocument.querySelector('body').textContent.includes('Enter for a chance to win!')) {
+      botFrame.contentWindow.location.href = 'https://www.amazon.com/ga/giveaways'
+    }
   } else if (location.includes('/ga/won')) {
     claimWin(location.split('/won/')[1].split('#')[0])
   }
@@ -97,7 +101,7 @@ window.addEventListener(
         return
       }
       if (this.oldScroll > this.scrollTop) {
-        autoscroll = false
+        window.autoscroll = false
         document.querySelector('#autoscroll').style.display = 'block'
       } else if (this.scrollHeight - this.clientHeight === this.scrollTop) {
         document.querySelector('#autoscroll').onclick()
@@ -108,7 +112,7 @@ window.addEventListener(
     document.querySelector('#autoscroll').onclick = function() {
       document.querySelector('#autoscroll').style.display = 'none'
       document.querySelector('#logContent').lastElementChild.scrollIntoView()
-      autoscroll = true
+      window.autoscroll = true
     }
 
     document.querySelector('#disableFollow').onclick = function() {
@@ -146,13 +150,18 @@ window.addEventListener(
       document.querySelector('#run').style.display = 'none'
       document.querySelector('#stop').style.display = 'block'
 
-      autoscroll = true
+      window.autoscroll = true
       document.querySelector('#showLog').click()
-      log('Bot Started for ' + document.querySelector('#amazonEmail').value)
+      log('Bot Started')
 
       botFrame = document.querySelector('#botFrame')
       botFrame.onload = main
-      main()
+      // main()
+      if (botFrame.contentDocument.querySelector('#nav-flyout-ya-signin a')) {
+        botFrame.contentDocument.querySelector('#nav-flyout-ya-signin a').click()
+      } else if (botFrame.contentDocument.querySelector('#nav-item-switch-account')) {
+        botFrame.contentDocument.querySelector('#nav-item-switch-account').click()
+      }
       // botFrame.contentWindow.location = 'https://www.amazon.com/ga/giveaways'
       // botFrame.contentDocument.querySelector('#nav-item-switch-account').click()
 
@@ -160,7 +169,9 @@ window.addEventListener(
         'unload',
         () => {
           if (GM_getValue('running')) {
-            log('Bot stopped')
+            setTimeout(() => {
+              log('Bot stopped')
+            }, 1000)
           }
           GM_setValue('running', false)
         },

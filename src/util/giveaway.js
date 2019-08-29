@@ -1,5 +1,6 @@
 import { log } from './logger'
 import { unfollowAuthors } from './unfollow'
+import { doSignIn } from './signIn'
 
 let giveaways = []
 let offset = 0
@@ -71,20 +72,24 @@ export function getGiveaways() {
 export function nextGiveaway() {
   if (!GM_getValue('running')) {
     return
+  } else if (botFrame.contentWindow.location.href.includes('/ga/p')) {
+    console.log(botFrame.contentWindow.location.href)
+    console.log(giveaways)
+    fetchGiveaway(giveaways[giveaways.length - 1])
   } else if (giveaways && giveaways.length > 0) {
     let next = giveaways.pop()
-    loadGiveaway(next)
+    fetchGiveaway(next)
   } else {
     log('Searching Giveaways...')
     getGiveaways()
   }
 }
 
-export function loadGiveaway(url) {
+export function fetchGiveaway(url) {
   if (!GM_getValue('running')) {
     return
   }
-  log('Loading', 'link', url)
+  log('Fetching ', 'link', url)
   if (!botFrame.contentWindow.P.pageContext) {
     botFrame.contentWindow.location = 'https://www.amazon.com/ga/giveaways'
     return
@@ -108,15 +113,30 @@ export function loadGiveaway(url) {
   })
     .then(res => res.json())
     .then(data => {
-      console.log(data.success.status)
-      if (data.success.status !== 'notParticipated') {
+      console.log(data)
+      if (data.loginUrl) {
+        log('Sign in needed')
+
+        // if (botFrame.contentDocument.querySelector('#nav-flyout-ya-signin a')) {
+        //   botFrame.contentDocument.querySelector('#nav-flyout-ya-signin a').click()
+        // } else if (botFrame.contentDocument.querySelector('#nav-item-switch-account')) {
+        //   botFrame.contentDocument.querySelector('#nav-item-switch-account').click()
+        // }
+        botFrame.contentWindow.location = data.loginUrl
+        doSignIn()
+        // nextGiveaway()
+        return
+      } else if (data.issue) {
+        console.log(data.issue)
+        log('Giveaway closed')
+        return
+      } else if (data.success && data.success.status !== 'notParticipated') {
+        console.log(data.success.status)
         addToHistory(giveawayId)
-        log('Giveaway ' + data.success.status)
+        log('Already participated (' + data.success.status + ')')
         nextGiveaway()
         return
-      }
-
-      if (data.success.nextUserAction) {
+      } else if (data.success.nextUserAction) {
         let needUnfollow = data.success.nextUserAction.name === 'followAuthor'
         fetch(`https://www.amazon.com/gax/-/pex/api/v1/giveaway/${giveawayId}/participation/nextAction`, {
           credentials: 'include',
@@ -136,15 +156,21 @@ export function loadGiveaway(url) {
           .then(data => {
             enterGiveaway(giveawayId, `{"encryptedState":"${data.success.encryptedState}"}`, needUnfollow)
           })
+          .catch(err => {
+            log('An error occured. Check dev tools for more info.', 'error')
+            // log(err)
+          })
       } else {
         enterGiveaway(giveawayId)
       }
     })
     .catch(err => {
-      log(err)
-
-      addToHistory(giveawayId)
-      nextGiveaway()
+      console.log('here')
+      log('An error occured. Check dev tools for more info.', 'error')
+      // log(err)
+      fetchGiveaway(url)
+      // addToHistory(giveawayId)
+      // nextGiveaway()
     })
 }
 
@@ -170,7 +196,8 @@ export function enterGiveaway(giveawayId, payload = '{}', needUnfollow = false) 
     .then(res => res.json())
     .then(data => {
       console.log(data.success.status)
-      document.querySelector('#logContent').lastElementChild.lastElementChild.textContent = 'Giveaway ' + data.success.status
+      let logItems = Array.from(document.querySelector('#logContent').childNodes).filter(el => el.textContent.includes('Submitting entry...'))
+      logItems[logItems.length - 1].lastElementChild.textContent += 'Giveaway ' + data.success.status
       let newHistory = GM_getValue('logHistory').split('|')
       newHistory[newHistory.length - 1] = newHistory[newHistory.length - 1].replace('Submitting entry...', 'Giveaway ' + data.success.status)
 

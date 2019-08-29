@@ -1,75 +1,7 @@
+import {STYLES} from './styles.js'
+
 export const UI_TEMPLATE = `
-<style>
-  input:not([type='checkbox']) {
-    width: 250px;
-    box-shadow: 0 0 0 100px #fff inset !important;
-    border: 1px solid rgb(206, 212, 218) !important;
-  }
-
-  .botNavLink {
-    /* all: unset; */
-    background-color: transparent;
-    text-decoration: none !important;
-    /* border-bottom: none; */
-    /* border-left: 1px solid transparent; */
-    /* border-right: 1px solid transparent;
-    border-top: 1px solid transparent; */
-    border-bottom: 1px solid #ccc;
-    padding: 10px;
-    font-size: 1rem;
-    outline: 0 !important;
-    flex: 1;
-    text-align: center;
-    color: #777;
-    /* box-shadow: 0 -1px 0 #ccc inset; */
-  }
-
-  .botNavLink:first-child {
-    /* border-radius: .28571429rem 0 0 0; */
-  }
-
-  .botNavLink.active {
-    position: relative;
-    /* top: 1px; */
-    color: #111;
-    /* box-shadow: 0 -1px 0 #F58B1F inset; */
-    background-color: #fff;
-    font-weight: 500;
-    /* border-top-width: 1px; */
-    border: 1px solid #ccc;
-    /* border-color: #ccc; */
-    /* margin-bottom: -1px; */
-    border-bottom: 1px solid transparent;
-    /* box-shadow: none; */
-    border-radius: .28571429rem .28571429rem 0 0 !important;
-  }
-
-  .botPanel {
-    position: relative;
-    background-color: transparent;
-    width: 100%;
-    display: none;
-    flex-direction: column;
-    padding: 7px 16px;
-    height: 400px;
-    width: 600px;
-    text-align: left;
-    overflow-y: scroll;
-    overflow-x: hidden;
-    border: 1px solid #ccc;
-    border-top: 0;
-  }
-
-  .botPanel.active {
-    display: block;
-  }
-
-  #winningsList.active {
-    display: flex;
-  }
-
-</style>
-
+${STYLES}
 <div id="controlPanel" style="position: fixed; top: 0px; left: 0px; width: 100vw; height: 100vh; display: flex; flex-direction: column; justify-content: center; background:#000; z-index: 9999;">
   <div id="container" style="font-family: 'Helvetica Neue', Arial, sans-serif; overflow: hidden; position: relative; min-width: 600px; margin: auto auto; color: #212529; background-color: #fff; border: 0px solid transparent; border-radius: .28571429rem; z-index: 9999; text-align: left; display: flex; flex-direction: column; justify-content: space-between;">
     <div style="position: relative; border-bottom: 0px solid #ddd; margin-top: 0; text-align: center;">
@@ -91,7 +23,7 @@ export const UI_TEMPLATE = `
       </a>
       <!-- <span class="botNavLink" style="flex: 1;"></span> -->
       <!-- <div style="flex: 1; display:flex; flex-direction: column; justify-content: space-between; padding: 10px; border-top: 0px solid #ccc; border-bottom: 1px solid #ccc; background: #fff;">
-      </div> -->
+        </div> -->
     </div>
 
     <div id="botOptions" class="botPanel active">
@@ -137,8 +69,21 @@ export const UI_TEMPLATE = `
       <iframe id="botFrame" style="width: 1200px; height: 800px; transform: scale(0.5); transform-origin: top left; border: 0;" src="https://www.amazon.com/ga/giveaways"></iframe>
     </div>
 
-    <div id="winningsList" class="botPanel" style="padding: 16px;">
-
+    <div id="winningsList" class="botPanel" style="padding: 0px;">
+      <div id="winningsHeader" style="text-align: center; font-size: 17px; font-weight: 400; padding: 16px;">
+        <span id="winningsHeaderCount">0 Giveaways Won</span>
+        <span style="margin: 0px 5px;"> - </span>
+        <span id="winningsHeaderValue">$0 Total Value</span>
+      </div>
+      <div class="listing-page" style="width: 1200px; height: 800px; transform: scale(0.5); transform-origin: top left; border: 0;">
+        <div class="listing-desktop">
+          <div class="listing-info-desktop">
+            <div>
+              <ul id="winningsListContainer" class="listing-info-container"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div style=" border-top: 0px solid #ddd; background-color: #fff; display: flex; justify-content: space-between; padding: 10px 16px; text-align: left;">
