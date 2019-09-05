@@ -3,6 +3,9 @@ import { updateUI, addToHistory } from './giveaway'
 import { fillAddressForm } from './address'
 
 export function claimWin(giveawayId, needUnfollow = false) {
+  if (GM_getValue('winHistory') && GM_getValue('winHistory').includes(giveawayId)) {
+    return
+  }
   notifyWin(giveawayId)
 
   let clickButton = setInterval(() => {
@@ -44,10 +47,10 @@ export function claimWin(giveawayId, needUnfollow = false) {
       botFrame.contentWindow.location.href = 'https://www.amazon.com/ga/giveaways'
     }
   }, 2000)
-  // setTimeout(() => {
-  //   clearInterval(clickButton)
-  //   botFrame.contentWindow.location.href = 'https://www.amazon.com/ga/giveaways'
-  // }, 30000)
+  setTimeout(() => {
+    clearInterval(clickButton)
+    botFrame.contentWindow.location.href = 'https://www.amazon.com/ga/giveaways'
+  }, 60000)
 }
 
 export function notifyWin(giveawayId) {
@@ -87,24 +90,27 @@ export function notifyWin(giveawayId) {
 
 export function recordWin(giveawayId) {
   if (!giveawayId) return
+  let winHistory = GM_getValue('winHistory')
+  if (!winHistory) {
+    GM_setValue('winHistory', '|' + giveawayId)
+  } else {
+    if (winHistory.includes(giveawayId)) {
+      return
+    }
+    GM_setValue('winHistory', winHistory + '|' + giveawayId)
+  }
+
+  winHistory = GM_getValue('winHistory')
+  if (winHistory.length > 100000) {
+    winHistory = winHistory.substr(winHistory.length - 100000)
+  }
+  GM_setValue('winHistory', winHistory)
 
   let wins = GM_getValue('totalWins')
   GM_setValue('totalWins', wins + 1)
   let currentSessionWins = GM_getValue('currentSessionWins')
   GM_setValue('currentSessionWins', currentSessionWins + 1)
   updateUI()
-
-  let winHistory = GM_getValue('winHistory')
-  if (!winHistory) {
-    GM_setValue('winHistory', '|' + giveawayId)
-  } else {
-    GM_setValue('winHistory', winHistory + '|' + giveawayId)
-  }
-  winHistory = GM_getValue('winHistory')
-  if (winHistory.length > 100000) {
-    winHistory = winHistory.substr(winHistory.length - 100000)
-  }
-  GM_setValue('winHistory', winHistory)
 
   saveWin(giveawayId)
 }
@@ -147,7 +153,11 @@ export function saveWin(giveawayId, isOldWin = false) {
       }
       allWinnings.push(winning)
       GM_setValue('allWinnings', JSON.stringify(allWinnings))
-      getListItem(winning)
+      if (document.querySelector('#winningsListContainer').childElementCount === 0) {
+        displayWinnings()
+      } else {
+        getListItem(winning)
+      }
       updateStats()
     })
 }
@@ -201,6 +211,7 @@ export function displayWinnings() {
       .filter((el, idx, self) => self.indexOf(el) === idx)
       .join('|')
     GM_setValue('winHistory', winHistory)
+    GM_setValue('totalWins', winHistory.length)
 
     winHistory = winHistory.split('|').reverse()
     let convertWinHistory = setInterval(() => {
@@ -222,9 +233,22 @@ export function displayWinnings() {
 }
 
 export function updateStats() {
+  document.querySelector('#winningsHeaderCount').innerText = GM_getValue('totalWins') + ' Giveaways Won'
   let totalValue = 0
   JSON.parse(GM_getValue('allWinnings')).forEach(winning => {
     totalValue += parseFloat(winning.priceValue.slice(1))
     document.querySelector('#winningsHeaderValue').innerText = '$' + Math.round(totalValue * 100) / 100 + ' Total Value'
+  })
+}
+
+export function initWinnings(params) {
+  if (!GM_getValue('totalWins')) {
+    GM_setValue('totalWins', 0)
+  }
+
+  document.querySelector('#totalWinsValue').innerHTML = GM_getValue('totalWins', 0)
+
+  document.querySelector('#showWinnings').addEventListener('click', () => {
+    displayWinnings()
   })
 }

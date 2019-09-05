@@ -1,6 +1,6 @@
 {
   "name": "amazon-giveaway-bot",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Automates Amazon giveaway entries",
   "main": "index.js",
   "scripts": {
@@ -28,7 +28,7 @@
   "devDependencies": {
     "webpack": "^4.35.3",
     "webpack-cli": "^3.3.5",
-    "webpack-userscript": "^2.3.0"
+    "webpack-userscript": "^2.3.1"
   },
   "dependencies": {
     "webpack-dev-server": "^3.7.2"

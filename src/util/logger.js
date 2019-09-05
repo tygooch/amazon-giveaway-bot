@@ -1,6 +1,6 @@
 export function restoreLog() {
   let logHistory = GM_getValue('logHistory')
-  if (logHistory !== '') {
+  if (logHistory) {
     document.querySelector('#clearLog').style.display = 'flex'
     logHistory.split('|').forEach(el => {
       let node = document.createElement('div')
@@ -20,7 +20,7 @@ export function restoreLog() {
 
 export function log(str, style = 'info', url) {
   document.querySelector('#clearLog').style.display = 'flex'
-  console.log(str)
+  if (style !== 'link') console.log(str)
   // if (str.toString().includes('TypeError')) {
   // str = 'An error occured'
   // }
@@ -45,14 +45,13 @@ export function log(str, style = 'info', url) {
     logInfo.style.fontWeight = 'bold'
   }
   if (style === 'error') {
-    logInfo.style.color = 'red'
-    logInfo.style.fontWeight = 'bold'
+    logInfo.style.color = '#D8000C'
   }
   if (style === 'link') {
+    console.log(url)
     let link = document.createElement('a')
-    link.textContent = url
+    link.textContent = url.split('/ga/p/')[1]
     link.href = url
-    link.style.marginLeft = '5px'
     logInfo.appendChild(link)
     link.onclick = e => {
       e.preventDefault()
@@ -65,6 +64,7 @@ export function log(str, style = 'info', url) {
   logItem.style.display = 'flex'
   logItem.appendChild(logTime)
   logItem.appendChild(logInfo)
+
   if (str === '') {
     logItem = document.createElement('div')
     logItem.appendChild(document.createElement('br'))
@@ -88,5 +88,43 @@ export function log(str, style = 'info', url) {
         .join('|')
     }
     GM_setValue('logHistory', logHistory + '|' + logItem.outerHTML)
+  }
+}
+
+export function initLog() {
+  window.autoscroll = true
+
+  document.querySelector('#showLog').addEventListener('click', () => {
+    if (document.querySelector('#logContent').childElementCount === 0) {
+      restoreLog()
+    }
+  })
+
+  document.querySelector('#clearLog').onclick = function() {
+    GM_setValue('logHistory', '')
+    document.querySelectorAll('#logContent div').forEach(el => el.remove())
+    document.querySelector('#autoscroll').style.display = 'none'
+    document.querySelector('#clearLog').style.display = 'none'
+    window.autoscroll = true
+  }
+
+  document.querySelector('#logContent').onscroll = function(e) {
+    if (document.querySelector('#logContent').innerHTML === '') {
+      this.oldScroll = this.scrollTop
+      return
+    }
+    if (this.oldScroll > this.scrollTop) {
+      window.autoscroll = false
+      document.querySelector('#autoscroll').style.display = 'block'
+    } else if (this.scrollHeight - this.clientHeight === this.scrollTop) {
+      document.querySelector('#autoscroll').onclick()
+    }
+    this.oldScroll = this.scrollTop
+  }
+
+  document.querySelector('#autoscroll').onclick = function() {
+    document.querySelector('#autoscroll').style.display = 'none'
+    document.querySelector('#logContent').lastElementChild.scrollIntoView()
+    window.autoscroll = true
   }
 }

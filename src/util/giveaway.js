@@ -1,11 +1,18 @@
 import { log } from './logger'
 import { unfollowAuthors } from './unfollow'
-import { doSignIn } from './signIn'
+import { signIn, nextAccount } from './account'
 
 let giveaways = []
 let offset = 0
 let historyKey
 let csrfToken
+
+export function initGiveaways() {
+  if (!GM_getValue('lifetimeEntries')) {
+    GM_setValue('lifetimeEntries', 0)
+  }
+  document.querySelector('#lifetimeEntriesValue').innerHTML = GM_getValue('lifetimeEntries')
+}
 
 export function getCsrf() {
   return csrfToken
@@ -27,13 +34,16 @@ export function getGiveaways() {
         return
       }
       offset += 1
-      if (document.querySelector('#logContent').lastElementChild.textContent.includes('Searching Giveaways')) {
+      if (
+        document.querySelector('#logContent').childElementCount !== 0 &&
+        document.querySelector('#logContent').lastElementChild.textContent.includes('Searching Giveaways')
+      ) {
         document.querySelector('#logContent').lastElementChild.lastElementChild.textContent =
           'Searching Giveaways... (page ' + offset + '/' + Math.ceil(parseFloat(data.totalGiveaways / 24)) + ')'
       } else {
         log('Searching Giveaways... (page ' + offset + '/' + Math.ceil(parseFloat(data.totalGiveaways / 24)) + ')')
       }
-      historyKey = document.querySelector('#amazonEmail').value + 'history'
+      historyKey = GM_getValue('currentAccount') + 'history'
       let visited = GM_getValue(historyKey)
       data.giveaways.forEach(item => {
         let canAdd = !visited || !visited.includes(item.id)
@@ -56,14 +66,37 @@ export function getGiveaways() {
         if (offset * 24 < data.totalGiveaways) {
           getGiveaways()
         } else {
-          let audio = new Audio('https://www.myinstants.com/media/sounds/ding-sound-effect_2.mp3')
-          audio.play()
-          log('All available giveaways have been entered for this account. Switch accounts or come back later to enter more.', 'error')
-          GM_notification(
-            'All available giveaways have been entered for this account. Switch accounts or come back later to enter more.',
-            'Giveaway Bot Stopped'
-          )
-          document.querySelector('#stop').click()
+          // if (true) {
+          log('No more active giveaways to enter for this account.')
+          offset = 0
+          nextAccount()
+          // let accounts = Object.keys(JSON.parse(GM_getValue('accounts')))
+          // console.log(accounts)
+          // if (accounts.length > 1) {
+          //   let nextIdx = accounts.indexOf(GM_getValue('currentAccount')) + 1
+          //   if (nextIdx >= accounts.length) {
+          //     nextIdx = 0
+          //   }
+          //   console.log(accounts[nextIdx])
+          //   GM_setValue('currentAccount', accounts[nextIdx])
+          //   console.log(GM_getValue('currentAccount'))
+          //   document.querySelector('#accountDropdown').value = accounts[nextIdx]
+
+          // if (botFrame.contentDocument.querySelector('#nav-flyout-ya-signin a')) {
+          //   botFrame.contentDocument.querySelector('#nav-flyout-ya-signin a').click()
+          // } else if (botFrame.contentDocument.querySelector('#nav-item-switch-account')) {
+          //   botFrame.contentDocument.querySelector('#nav-item-switch-account').click()
+          // }
+          // } else {
+          //   let audio = new Audio('https://www.myinstants.com/media/sounds/ding-sound-effect_2.mp3')
+          //   audio.play()
+          //   log('All available giveaways have been entered for this account. Switch accounts or come back later to enter more.', 'error')
+          //   GM_notification(
+          //     'All available giveaways have been entered for this account. Switch accounts or come back later to enter more.',
+          //     'Giveaway Bot Stopped'
+          //   )
+          //   document.querySelector('#stop').click()
+          // }
         }
       }
     })
@@ -74,7 +107,6 @@ export function nextGiveaway() {
     return
   } else if (botFrame.contentWindow.location.href.includes('/ga/p')) {
     console.log(botFrame.contentWindow.location.href)
-    console.log(giveaways)
     fetchGiveaway(giveaways[giveaways.length - 1])
   } else if (giveaways && giveaways.length > 0) {
     let next = giveaways.pop()
@@ -89,7 +121,7 @@ export function fetchGiveaway(url) {
   if (!GM_getValue('running')) {
     return
   }
-  log('Fetching ', 'link', url)
+  log('Loading ', 'link', url)
   if (!botFrame.contentWindow.P.pageContext) {
     botFrame.contentWindow.location = 'https://www.amazon.com/ga/giveaways'
     return
@@ -123,12 +155,14 @@ export function fetchGiveaway(url) {
         //   botFrame.contentDocument.querySelector('#nav-item-switch-account').click()
         // }
         botFrame.contentWindow.location = data.loginUrl
-        doSignIn()
+        signIn()
         // nextGiveaway()
         return
       } else if (data.issue) {
+        console.log(data)
         console.log(data.issue)
-        log('Giveaway closed')
+        log('Giveaway closed', 'error')
+        nextGiveaway()
         return
       } else if (data.success && data.success.status !== 'notParticipated') {
         console.log(data.success.status)
@@ -157,7 +191,7 @@ export function fetchGiveaway(url) {
             enterGiveaway(giveawayId, `{"encryptedState":"${data.success.encryptedState}"}`, needUnfollow)
           })
           .catch(err => {
-            log('An error occured. Check dev tools for more info.', 'error')
+            log(err, 'error')
             // log(err)
           })
       } else {
@@ -166,7 +200,7 @@ export function fetchGiveaway(url) {
     })
     .catch(err => {
       console.log('here')
-      log('An error occured. Check dev tools for more info.', 'error')
+      log(err, 'error')
       // log(err)
       fetchGiveaway(url)
       // addToHistory(giveawayId)
@@ -178,7 +212,7 @@ export function enterGiveaway(giveawayId, payload = '{}', needUnfollow = false) 
   if (!GM_getValue('running')) {
     return
   }
-  log('Submitting entry... ')
+  log('Status: ' + 'submitting entry')
   fetch(`https://www.amazon.com/gax/-/pex/api/v1/giveaway/${giveawayId}/participation`, {
     credentials: 'include',
     headers: {
@@ -196,14 +230,16 @@ export function enterGiveaway(giveawayId, payload = '{}', needUnfollow = false) 
     .then(res => res.json())
     .then(data => {
       console.log(data.success.status)
-      let logItems = Array.from(document.querySelector('#logContent').childNodes).filter(el => el.textContent.includes('Submitting entry...'))
-      logItems[logItems.length - 1].lastElementChild.textContent += 'Giveaway ' + data.success.status
+      // log('Status: ' + data.success.status)
+      let logItems = Array.from(document.querySelector('#logContent').childNodes).filter(el => el.textContent.includes('Status: '))
+      logItems[logItems.length - 1].lastElementChild.textContent = 'Status: ' + data.success.status
       let newHistory = GM_getValue('logHistory').split('|')
-      newHistory[newHistory.length - 1] = newHistory[newHistory.length - 1].replace('Submitting entry...', 'Giveaway ' + data.success.status)
-
+      newHistory[newHistory.length - 1] = newHistory[newHistory.length - 1].replace('submitting entry', data.success.status)
       GM_setValue('logHistory', newHistory.join('|'))
+
       updateEntryCount()
-      if (data.success.status !== 'lucky') {
+
+      if (data.success.status !== 'lucky' && data.success.status !== 'won') {
         addToHistory(giveawayId)
         if (needUnfollow) {
           unfollowAuthors()
@@ -211,19 +247,21 @@ export function enterGiveaway(giveawayId, payload = '{}', needUnfollow = false) 
           nextGiveaway()
         }
       } else {
-        botFrame.contentWindow.location.href = 'https://www.amazon.com/ga/p/' + giveawayId
+        // let audio = new Audio('https://www.myinstants.com/media/sounds/cash-register-sound-fx_HgrEcyp.mp3')
+        // audio.play()
+        botFrame.contentWindow.location = 'https://www.amazon.com/ga/won/' + giveawayId
         // claimWin(giveawayId, needUnfollow)
       }
     })
     .catch(err => {
       console.log('ERROR')
-      log(err)
+      log(err, 'error')
       nextGiveaway()
     })
 }
 
 export function addToHistory(giveawayId) {
-  let historyKey = document.querySelector('#amazonEmail').value + 'history'
+  let historyKey = GM_getValue('currentAccount') + 'history'
   let visited = GM_getValue(historyKey, '')
   visited += '|' + giveawayId
   if (visited.length > 68000) {

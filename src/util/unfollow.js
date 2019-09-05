@@ -1,6 +1,12 @@
 import { log } from './logger'
 
 export function unfollowAuthors() {
+  // wait >=5 mins before unfollows. New subscribtions can take a while to resolve in the db so this saves us time
+  if (GM_getValue('lastUnfollowTime') && Date.now() - GM_getValue('lastUnfollowTime') < 300000) {
+    botFrame.contentWindow.location.replace('https://www.amazon.com/ga/giveaways')
+    return
+  }
+  GM_setValue('lastUnfollowTime', Date.now())
   log('Unfollowing author...')
   botFrame.contentWindow.location.href = 'https://www.amazon.com/preferences/subscriptions/your-subscriptions/current-subscriptions'
 

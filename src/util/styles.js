@@ -1,8 +1,21 @@
 export const STYLES = `
 <style>
+  #giveawayFilter div * {
+    cursor: pointer !important;
+  }
+
   input:not([type='checkbox']) {
-    width: 250px;
+    width: 100%;
     box-shadow: 0 0 0 100px #fff inset !important;
+    border: 1px solid rgb(206, 212, 218) !important;
+  }
+
+  :focus{
+    outline: 0;
+  }
+
+  select {
+    width: 100%;
     border: 1px solid rgb(206, 212, 218) !important;
   }
 
@@ -63,9 +76,42 @@ export const STYLES = `
   .botPanel.active {
     display: block;
   }
+  
+  #log.active {
+    display: flex;
+    flex-direction: column;
+  }
 
   #winningsList.active {
     display: flex;
+  }
+
+  #logContent > div {
+    
+    padding: 0px 16px;
+  }
+
+  #logContent > div:nth-child(-n+17) {
+    border-bottom: 1px solid #eee;
+  }
+  #logContent > div:nth-child(n+19) {
+    border-top: 1px solid #eee;
+  }
+
+  #logContent::-webkit-scrollbar {
+    width: 5px;
+    background: #eee;
+  }
+  
+  #logContent::-webkit-scrollbar-thumb {
+    background-color: #C1C1C1;
+    border-color: transparent;
+    border-style: solid;
+    box-shadow: 0 0 1px rgba(255, 255, 255, 0.5);
+  }
+  
+  #logContent::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.5);
   }
 
   /* Global body style */
@@ -427,23 +473,8 @@ export const STYLES = `
     max-height: 160px;
   }
 
-  @media only screen and (max-width: 849px) {
-    .listing-info-desktop .listing-info-container > .listing-item {
-      background: #ffffff;
-      margin-left: 14px;
-      -ms-flex-preferred-size: calc(50% - 14px);
-      flex-basis: calc(50% - 14px);
-      max-width: calc(50% - 14px);
-    }
 
-    .listing-info-desktop .listing-info-container > .listing-item.x2 {
-      -ms-flex-preferred-size: calc(100% - 14px);
-      flex-basis: calc(100% - 14px);
-      max-width: calc(100% - 14px);
-    }
-  }
-
-  @media only screen and (min-width: 850px) {
+  @media only screen and (min-width: 400px) {
     .listing-info-desktop .listing-info-container > .listing-item {
       background: #ffffff;
       margin-left: 14px;
