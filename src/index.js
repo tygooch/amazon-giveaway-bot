@@ -152,12 +152,22 @@ async function stopBot() {
 //     botFrame.contentDocument.querySelector('#nav-item-switch-account').click()
 //   }
 // }
+document.open()
+document.write('')
+document.close()
 
 window.addEventListener(
   'load',
   async () => {
+    console.log('load')
+    window.stop()
     // GM_setValue('running', false)
-    setup()
+    await setup()
+    // setTimeout(() => {
+    document.querySelectorAll('script').forEach(el => {
+      el.remove()
+    })
+    // }, 5000)
   },
   { capture: false, once: true }
 )

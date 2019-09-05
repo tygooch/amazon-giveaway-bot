@@ -21,17 +21,9 @@ export function restoreLog() {
 export function log(str, style = 'info', url) {
   document.querySelector('#clearLog').style.display = 'flex'
   if (style !== 'link') console.log(str)
-  // if (str.toString().includes('TypeError')) {
-  // str = 'An error occured'
-  // }
   let date = new Date().toString().split(' ')[4]
-  // date = date
-  //   .slice(1, 3)
-  //   .concat(date[4])
-  //   .join(' ')
 
   let logTime = document.createElement('span')
-  // logTime.textContent = '[' + date + ']'
   logTime.textContent = date
   logTime.style.color = '#bbb'
   logTime.style.marginRight = '5px'

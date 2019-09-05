@@ -1,5 +1,4 @@
 import { log } from './logger'
-// import { main } from '../index'
 
 export function solveCaptcha() {
   if (!GM_getValue('twoCaptchaKey').length > 0) {
@@ -71,7 +70,6 @@ export function sendCaptcha(imgUrl) {
                   })
                   solveCaptcha()
                 } else {
-                  // main()
                 }
               }, 5000)
             } else if (captchaAnswer.request === 'ERROR_CAPTCHA_UNSOLVABLE') {

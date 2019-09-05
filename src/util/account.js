@@ -11,7 +11,6 @@ export function getAccounts() {
     let optionEl = document.createElement('option')
     optionEl.textContent = key
     optionEl.value = key
-    // optionEl.selected = GM_getValue('currentAccount') === key
     document.querySelector('#accountDropdown').prepend(optionEl)
   })
   if (GM_getValue('currentAccount')) {
@@ -19,7 +18,6 @@ export function getAccounts() {
   } else {
     showNoSelection()
   }
-  // document.querySelector('#amazonEmail').value = GM_getValue('currentAccount')
 }
 
 export function selectAccount(email) {
@@ -30,9 +28,6 @@ export function selectAccount(email) {
     document.querySelector('#editAddress').style.display = 'block'
   }
   GM_setValue('currentAccount', email)
-  // document.querySelector('#accountAddressContainer').style.display = 'flex'
-  // document.querySelector('#accountModal').style.display = 'none'
-  // document.querySelector('#accountForm').style.display = 'none'
   document.querySelector('#amazonEmail').value = email
   document.querySelector('#amazonPassword').value = JSON.parse(GM_getValue('accounts'))[email].password
   document.querySelector("option[value='" + email + "']").selected = true
@@ -75,17 +70,11 @@ export function saveAccount() {
     optionEl.textContent = document.querySelector('#amazonEmail').value
     optionEl.value = document.querySelector('#amazonEmail').value
 
-    // optionEl.selected = true
     document.querySelector('#accountDropdown').prepend(optionEl)
     selectAccount(document.querySelector('#amazonEmail').value)
     document.querySelector('#editAddress').click()
-    // document.querySelector('#accountModal').style.display = 'none'
-    // document.querySelector('#addressModal').style.display = 'flex'
-    // document.querySelectorAll('#addressModal input').forEach(el => (el.value = ''))
-    // document.querySelector('input#fullName').focus()
   }
 
-  // document.querySelector('#accountDropdown').value = ''
   document.querySelector('#accountModal').style.display = 'none'
 }
 
@@ -126,47 +115,42 @@ export async function switchAccount() {
 
 export async function signIn() {
   let currentAccount = GM_getValue('currentAccount')
-  // let password = JSON.parse(GM_getValue('accounts'))[currentAccount].password
-  let signIn = setInterval(() => {
+  console.log(currentAccount)
+  let signInInterval = setInterval(() => {
     if (!GM_getValue('running')) {
-      clearInterval(signIn)
+      clearInterval(signInInterval)
     } else if (botFrame.contentDocument.querySelector('#auth-captcha-image') || botFrame.contentDocument.querySelector('#captchacharacters')) {
-      clearInterval(signIn)
+      clearInterval(signInInterval)
       solveCaptcha()
     } else if (botFrame.contentDocument.querySelector('body') && botFrame.contentDocument.querySelector('body').textContent.includes('Send OTP')) {
-      clearInterval(signIn)
+      clearInterval(signInInterval)
       log('SIGN IN FAILED - NEED OTP')
       nextAccount()
-      // document.querySelector('#stop').click()
+    } else if (botFrame.contentDocument.querySelector('#ap_email') && botFrame.contentDocument.querySelector('#continue input')) {
+      log('Signing in ' + currentAccount)
+      botFrame.contentDocument.querySelector('#ap_email').value = currentAccount
+      if (!botFrame.contentDocument.querySelector('#ap_password') && botFrame.contentDocument.querySelector('#continue input')) {
+        botFrame.contentDocument.querySelector('#continue input').click()
+      }
     } else if (botFrame.contentDocument.querySelector('#ap_password')) {
       if (
         botFrame.contentDocument.querySelector('.a-size-base.a-color-tertiary.auth-text-truncate') &&
         !botFrame.contentDocument.querySelector('.a-size-base.a-color-tertiary.auth-text-truncate').textContent.includes(currentAccount)
       ) {
-        clearInterval(signIn)
+        clearInterval(signInInterval)
         log(currentAccount + ' signed out')
         botFrame.contentDocument.querySelector('#ap_switch_account_link').click()
       } else {
-        clearInterval(signIn)
-        if (botFrame.contentDocument.querySelector('#ap_email')) {
-          // log('Entering email')
-          botFrame.contentDocument.querySelector('#ap_email').value = currentAccount
-        }
-        log('Signing in ' + currentAccount)
+        clearInterval(signInInterval)
         botFrame.contentDocument.querySelector('#ap_password').value = JSON.parse(GM_getValue('accounts'))[currentAccount].password
         botFrame.contentDocument.querySelector('#signInSubmit').click()
-        // log(currentAccount + ' signed in')
-        // GM_setValue('currentAccount', currentAccount)
       }
     } else if (botFrame.contentDocument.querySelector('.cvf-account-switcher-spacing-base a')) {
-      clearInterval(signIn)
-      // log('Signing In ')
+      clearInterval(signInInterval)
       let accountAdded = false
       botFrame.contentDocument.querySelectorAll('.a-section.cvf-account-switcher-spacing-base a').forEach(el => {
         if (el.textContent.includes(currentAccount)) {
           accountAdded = true
-          GM_setValue('currentAccount', currentAccount)
-          log('Signing in ' + currentAccount)
           el.click()
         } else if (el.textContent.includes('Add account') && !accountAdded) {
           log('Adding account ' + currentAccount)
@@ -185,8 +169,7 @@ export function nextAccount() {
     if (nextIdx >= accounts.length) {
       nextIdx = 0
     }
-    GM_setValue('currentAccount', accounts[nextIdx])
-    document.querySelector('#accountDropdown').value = accounts[nextIdx]
+    selectAccount(accounts[nextIdx])
 
     botFrame.contentWindow.location =
       'https://www.amazon.com/gp/navigation/redirector.html/ref=sign-in-redirect?ie=UTF8&associationHandle=usflex&currentPageURL=https%3A%2F%2Fwww.amazon.com%2Fgp%2Fyourstore%2Fhome%3Fie%3DUTF8%26ref_%3Dnav_youraccount_switchacct&pageType=&switchAccount=picker&yshURL=https%3A%2F%2Fwww.amazon.com%2Fgp%2Fyourstore%2Fhome%3Fie%3DUTF8%26ref_%3Dnav_youraccount_switchacct'
@@ -202,12 +185,7 @@ export function nextAccount() {
 export function initAccounts() {
   getAccounts()
   document.querySelector('#accountDropdown').onchange = function() {
-    // if (document.querySelector('#accountDropdown').value === '') {
-    // document.querySelector('#noSelection').style.display = 'block'
-    // }
-    // console.log(document.querySelector('#accountDropdown').value === 'Add New Account')
     if (document.querySelector('#accountDropdown').value === 'Add New Account') {
-      // document.querySelector('#accountDropdown').style.display = 'none'
       document.querySelector('#modalOverlay').onclick = document.querySelector('#cancelAccountButton').onclick
       document.querySelector('#accountForm').onclick = e => {
         e.stopPropagation()
@@ -216,9 +194,6 @@ export function initAccounts() {
       document.querySelector('#accountModal').style.display = 'flex'
       document.querySelectorAll('#accountModal input').forEach(el => (el.value = ''))
       document.querySelector('#amazonEmail').focus()
-
-      // document.querySelector('#amazonEmail').value = ''
-      // document.querySelector('#amazonPassword').value = ''
     } else if (document.querySelector('#accountDropdown').value !== '') {
       selectAccount(document.querySelector('#accountDropdown').value)
     }
@@ -265,6 +240,5 @@ export function initAccounts() {
   document.querySelector('#saveAccountButton').onclick = function() {
     document.querySelector('#amazonEmail').disabled = false
     saveAccount()
-    // document.querySelector('#modalOverlay').style.visibility = 'hidden'
   }
 }

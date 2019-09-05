@@ -1,14 +1,10 @@
 export function getAddress() {
   document.querySelector('#accountAddressContainer').style.display = 'flex'
-  // document.querySelector('#newAddressButton').style.display = 'none'
   if (
     !GM_getValue('accounts') ||
     !JSON.parse(GM_getValue('accounts'))[document.querySelector('#accountDropdown').value] ||
     !JSON.parse(GM_getValue('accounts'))[document.querySelector('#accountDropdown').value].address
   ) {
-    // document.querySelector('#newAddressButton').style.display = 'flex'
-    // document.querySelector('#accountAddress').style.visibility = 'hidden'
-    // document.querySelector('#newAddressButton').style.display = 'none'
     return
   }
   document.querySelector('#accountAddress').style.display = 'flex'
@@ -25,12 +21,10 @@ export function saveAddress() {
   document.querySelectorAll('#addressForm input').forEach(el => {
     address[el.id] = el.value
   })
-  // let currentAccount = GM_getValue('currentAccount')
   let accounts = JSON.parse(GM_getValue('accounts'))
   accounts[document.querySelector('#accountDropdown').value].address = address
   GM_setValue('accounts', JSON.stringify(accounts))
   getAddress()
-  // GM_setValue(document.querySelector('#amazonEmail').value + 'shippingAddress', JSON.stringify(address))
 }
 
 export function fillAddressForm() {

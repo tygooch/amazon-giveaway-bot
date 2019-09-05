@@ -66,37 +66,9 @@ export function getGiveaways() {
         if (offset * 24 < data.totalGiveaways) {
           getGiveaways()
         } else {
-          // if (true) {
           log('No more active giveaways to enter for this account.')
           offset = 0
           nextAccount()
-          // let accounts = Object.keys(JSON.parse(GM_getValue('accounts')))
-          // console.log(accounts)
-          // if (accounts.length > 1) {
-          //   let nextIdx = accounts.indexOf(GM_getValue('currentAccount')) + 1
-          //   if (nextIdx >= accounts.length) {
-          //     nextIdx = 0
-          //   }
-          //   console.log(accounts[nextIdx])
-          //   GM_setValue('currentAccount', accounts[nextIdx])
-          //   console.log(GM_getValue('currentAccount'))
-          //   document.querySelector('#accountDropdown').value = accounts[nextIdx]
-
-          // if (botFrame.contentDocument.querySelector('#nav-flyout-ya-signin a')) {
-          //   botFrame.contentDocument.querySelector('#nav-flyout-ya-signin a').click()
-          // } else if (botFrame.contentDocument.querySelector('#nav-item-switch-account')) {
-          //   botFrame.contentDocument.querySelector('#nav-item-switch-account').click()
-          // }
-          // } else {
-          //   let audio = new Audio('https://www.myinstants.com/media/sounds/ding-sound-effect_2.mp3')
-          //   audio.play()
-          //   log('All available giveaways have been entered for this account. Switch accounts or come back later to enter more.', 'error')
-          //   GM_notification(
-          //     'All available giveaways have been entered for this account. Switch accounts or come back later to enter more.',
-          //     'Giveaway Bot Stopped'
-          //   )
-          //   document.querySelector('#stop').click()
-          // }
         }
       }
     })
@@ -149,14 +121,8 @@ export function fetchGiveaway(url) {
       if (data.loginUrl) {
         log('Sign in needed')
 
-        // if (botFrame.contentDocument.querySelector('#nav-flyout-ya-signin a')) {
-        //   botFrame.contentDocument.querySelector('#nav-flyout-ya-signin a').click()
-        // } else if (botFrame.contentDocument.querySelector('#nav-item-switch-account')) {
-        //   botFrame.contentDocument.querySelector('#nav-item-switch-account').click()
-        // }
         botFrame.contentWindow.location = data.loginUrl
         signIn()
-        // nextGiveaway()
         return
       } else if (data.issue) {
         console.log(data)
@@ -192,7 +158,6 @@ export function fetchGiveaway(url) {
           })
           .catch(err => {
             log(err, 'error')
-            // log(err)
           })
       } else {
         enterGiveaway(giveawayId)
@@ -201,10 +166,7 @@ export function fetchGiveaway(url) {
     .catch(err => {
       console.log('here')
       log(err, 'error')
-      // log(err)
       fetchGiveaway(url)
-      // addToHistory(giveawayId)
-      // nextGiveaway()
     })
 }
 
@@ -230,7 +192,6 @@ export function enterGiveaway(giveawayId, payload = '{}', needUnfollow = false) 
     .then(res => res.json())
     .then(data => {
       console.log(data.success.status)
-      // log('Status: ' + data.success.status)
       let logItems = Array.from(document.querySelector('#logContent').childNodes).filter(el => el.textContent.includes('Status: '))
       logItems[logItems.length - 1].lastElementChild.textContent = 'Status: ' + data.success.status
       let newHistory = GM_getValue('logHistory').split('|')
@@ -247,10 +208,7 @@ export function enterGiveaway(giveawayId, payload = '{}', needUnfollow = false) 
           nextGiveaway()
         }
       } else {
-        // let audio = new Audio('https://www.myinstants.com/media/sounds/cash-register-sound-fx_HgrEcyp.mp3')
-        // audio.play()
         botFrame.contentWindow.location = 'https://www.amazon.com/ga/won/' + giveawayId
-        // claimWin(giveawayId, needUnfollow)
       }
     })
     .catch(err => {
@@ -264,8 +222,8 @@ export function addToHistory(giveawayId) {
   let historyKey = GM_getValue('currentAccount') + 'history'
   let visited = GM_getValue(historyKey, '')
   visited += '|' + giveawayId
-  if (visited.length > 68000) {
-    visited = visited.slice(visited.length - 68000)
+  if (visited.length > 100000) {
+    visited = visited.slice(visited.length - 100000)
   }
   GM_setValue(historyKey, visited)
 }

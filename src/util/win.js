@@ -2,7 +2,7 @@ import { log } from './logger'
 import { updateUI, addToHistory } from './giveaway'
 import { fillAddressForm } from './address'
 
-export function claimWin(giveawayId, needUnfollow = false) {
+export function claimWin(giveawayId) {
   if (GM_getValue('winHistory') && GM_getValue('winHistory').includes(giveawayId)) {
     return
   }
@@ -36,11 +36,6 @@ export function claimWin(giveawayId, needUnfollow = false) {
       recordWin(giveawayId)
       addToHistory(giveawayId)
       botFrame.contentWindow.location.href = 'https://www.amazon.com/ga/giveaways'
-      // nextGiveaway()
-      // if (needUnfollow) {
-      //   unfollowAuthors()
-      // } else {
-      // }
     } else if (botFrame.contentDocument.querySelector('body').textContent.includes('we need your tax info')) {
       clearInterval(clickButton)
       log('Tax info required to claim', 'error')
@@ -57,7 +52,6 @@ export function notifyWin(giveawayId) {
   log('Giveaway won!', 'success')
   let audio = new Audio('https://www.myinstants.com/media/sounds/cash-register-sound-fx_HgrEcyp.mp3')
   audio.play()
-  // botFrame.contentWindow.location.href = 'https://www.amazon.com/ga/p/' + giveawayId
   fetch('https://www.amazon.com/gax/-/pex/api/v1/giveaway/' + giveawayId, {
     credentials: 'include',
     headers: {
@@ -114,11 +108,6 @@ export function recordWin(giveawayId) {
 
   saveWin(giveawayId)
 }
-
-// export function displayWinnings() {
-//   let winnings = getWinnings()
-//   console.log(winnings)
-// }
 
 export function saveWin(giveawayId, isOldWin = false) {
   if (!giveawayId || giveawayId === '' || giveawayId.includes('?')) {
@@ -241,7 +230,7 @@ export function updateStats() {
   })
 }
 
-export function initWinnings(params) {
+export function initWinnings() {
   if (!GM_getValue('totalWins')) {
     GM_setValue('totalWins', 0)
   }
