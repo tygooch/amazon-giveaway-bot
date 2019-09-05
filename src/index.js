@@ -1,15 +1,10 @@
 import { UI_TEMPLATE } from './util/uiTemplate'
-// // import { getAddress, saveAddress, fillAddressForm } from './util/address'
 import { initAccounts, signIn, switchAccount } from './util/account'
 import { initAddress } from './util/address'
-// // import { solveCaptcha, sendCaptcha, getBase64Image } from './util/captcha'
 import { initGiveaways, nextGiveaway } from './util/giveaway'
-// // import { getGiveaways, nextGiveaway, loadGiveaway, enterGiveaway, addToHistory, updateUI, updateEntryCount } from './util/giveaways'
 import { log, initLog } from './util/logger'
-// import { signIn } from './util/signIn'
 import { claimWin, initWinnings } from './util/win'
 
-// window.autoscroll = true
 let botFrame
 let timer
 
@@ -23,9 +18,6 @@ async function main() {
 
   if (isSignIn) {
     signIn()
-    // } else if (!GM_getValue('currentAccount') || !GM_getValue('currentAccount').includes(document.querySelector('#amazonEmail').value)) {
-    //   botFrame.contentDocument.querySelector('#nav-item-switch-account').click()
-    // botFrame.contentWindow.location.href = 'https://www.amazon.com/gp/navigation/redirector.html/ref=sign-in-redirect'
   } else if (location.includes('/home')) {
     log(GM_getValue('currentAccount') + ' signed in')
     botFrame.contentWindow.location.href = 'https://www.amazon.com/ga/giveaways'
@@ -33,15 +25,9 @@ async function main() {
     window.csrfToken = botFrame.contentWindow.P.pageContext.csrfToken
     nextGiveaway()
   } else if (location.includes('/ga/p') && !window.csrfToken) {
-    // if (GM_getValue('winHistory').includes(location.split('/won/')[1].split('#')[0]) || GM_getValue('winHistory').includes(location.split('/ga/p/')[1])) {
     botFrame.contentWindow.location.href = 'https://www.amazon.com/ga/giveaways'
-    // } else {
-    // }
-    // if (!botFrame.contentDocument.querySelector('body').textContent.includes('You will receive an email')) {
-    // }
   } else if (location.includes('/ga/won')) {
     claimWin(location.split('/won/')[1].split('#')[0])
-    //   claimWin(location.split('/won/')[1].split('#')[0])
   }
 }
 
@@ -118,12 +104,6 @@ async function startBot() {
 
   document.querySelector('#run').style.display = 'none'
   document.querySelector('#stop').style.display = 'block'
-  // document.querySelector('#logStatus').innerText = 'Status: Running'
-  // let startTime = Date.now()
-  // timer = setInterval(() => {
-  //   let runTime = new Date(Date.now() - startTime).toUTCString().split(' ')[4]
-  //   document.querySelector('#logStatus').innerText = 'Status: Running ' + runTime + ''
-  // }, 1000)
 
   window.autoscroll = true
   document.querySelector('#showLog').click()
@@ -144,14 +124,6 @@ async function stopBot() {
   document.querySelector('#run').style.display = 'block'
 }
 
-// async function attachBotFrame() {
-//   // main()
-//   if (botFrame.contentDocument.querySelector('#nav-flyout-ya-signin a')) {
-//     botFrame.contentDocument.querySelector('#nav-flyout-ya-signin a').click()
-//   } else if (botFrame.contentDocument.querySelector('#nav-item-switch-account')) {
-//     botFrame.contentDocument.querySelector('#nav-item-switch-account').click()
-//   }
-// }
 document.open()
 document.write('')
 document.close()
@@ -161,13 +133,10 @@ window.addEventListener(
   async () => {
     console.log('load')
     window.stop()
-    // GM_setValue('running', false)
     await setup()
-    // setTimeout(() => {
     document.querySelectorAll('script').forEach(el => {
       el.remove()
     })
-    // }, 5000)
   },
   { capture: false, once: true }
 )
@@ -176,9 +145,7 @@ window.addEventListener(
   'unload',
   async () => {
     if (GM_getValue('running')) {
-      // setTimeout(() => {
       log('Bot stopped')
-      // }, 1000)
     }
     GM_setValue('running', false)
   },

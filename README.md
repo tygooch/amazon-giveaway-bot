@@ -1,13 +1,8 @@
 # Amazon Giveaway Bot
 
-<div align="center">
-  <img src="/images/screenshot.png" style="width: 500px;" />
-</div>
-<!-- ![AmazonGiveawayBotLogo](/images/screenshot.png) -->
+JS userscript that automates entry into <a href=https://www.amazon.com/ga/giveaways>Amazon Giveaways</a>
 
-<p align="center">
-  JS userscript to automate entry into <a href=https://www.amazon.com/ga/giveaways>Amazon Giveaways</a>.
-</p>
+<img src="/images/screenshot.png" style="width: 400px;" />
 
 ## Requirements
 
@@ -29,7 +24,7 @@ Support for solving captchas using the 2captcha API is now available. If you are
 
 ### Multiple Accounts
 
-Users can use different Amazon accounts on the same machine. History of entered giveaways is stored locally for each account to avoid revisiting giveaways previously entered.
+Users can use different Amazon accounts on the same machine. History of entered giveaways is stored locally for each account to avoid revisiting giveaways previously entered. If you have more than one account added, the bot will automatically switch to another account after all giveaways are entered.
 
 ### Notifications
 

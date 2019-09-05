@@ -7,7 +7,7 @@
 // @supportURL https://github.com/TyGooch/amazon-giveaway-bot/issues
 // @match https://www.amazon.com/giveaway/*
 // @downloadURL https://github.com/TyGooch/amazon-giveaway-bot/raw/master/amazonGiveawayBot.user.js
-// @updateURL https://github.com/TyGooch/amazon-giveaway-bot/raw/master/amazonGiveawayBot.user.js
+// @updateURL https://github.com/TyGooch/amazon-giveaway-bot/raw/master/amazonGiveawayBot.meta.js
 // @grant GM_setValue
 // @grant GM_getValue
 // @grant GM_addStyle
