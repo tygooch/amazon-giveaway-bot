@@ -2,7 +2,7 @@
 
 JS userscript that automates entry into <a href=https://www.amazon.com/ga/giveaways>Amazon Giveaways</a>
 
-<img src="/images/screenshot.png" style="width: 400px;" />
+<img src="/images/winnings.png" style="width: 400px;" />
 
 ## Requirements
 
