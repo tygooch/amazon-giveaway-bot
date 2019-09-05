@@ -29,3 +29,13 @@ Users can use different Amazon accounts on the same machine. History of entered 
 ### Notifications
 
 When you win a giveaway or all the current giveaways are entered you will be notified via a desktop notification.
+
+## Development
+
+After cloning this repo, start the dev server by running `npm start`
+
+Webpack dev server will now watch for any changes and serve the updated script at https://localhost:8080/amazonGiveawayBot.user.js. Install the script by visiting https://localhost:8080/amazonGiveawayBot.user.js and be sure to disable any other versions of the script you have installed in the Tampermonkey dashboard.
+
+Once installed, the script will automatically update whenever changes are made. If you're having issues, try forcing an update in the Tampermonkey dashboard.
+
+When you're ready for a production build run `npm build` and webpack will output a minified version in the root directory of this project
