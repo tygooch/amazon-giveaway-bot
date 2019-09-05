@@ -131,7 +131,6 @@ document.close()
 window.addEventListener(
   'load',
   async () => {
-    console.log('load')
     window.stop()
     await setup()
     document.querySelectorAll('script').forEach(el => {
