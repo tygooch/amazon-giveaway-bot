@@ -7,7 +7,7 @@ module.exports = {
   entry: path.join(__dirname, 'src', 'index.js'),
   output: {
     path: path.resolve(__dirname),
-    filename: 'amazon-giveaway-bot.js',
+    filename: 'amazonGiveawayBot.js',
   },
   devServer: {
     contentBase: path.resolve(__dirname),
