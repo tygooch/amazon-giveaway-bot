@@ -22,7 +22,7 @@ async function main() {
     botFrame.contentWindow.location.href = 'https://www.amazon.com/ga/giveaways'
     // botFrame.contentWindow.location.reload()
   } else if (location.includes('/ga/giveaways')) {
-    if (botFrame.contentWindow.P && botFrame.contentWindow.P.pageContext) {
+    if (botFrame.contentWindow && botFrame.contentWindow.P && botFrame.contentWindow.P.pageContext && botFrame.contentWindow.P.pageContext.csrfToken) {
       window.csrfToken = botFrame.contentWindow.P.pageContext.csrfToken
     }
     nextGiveaway()
@@ -116,7 +116,7 @@ async function startBot() {
   window.autoscroll = true
   document.querySelector('#showLog').click()
   log('Bot Started')
-  if (botFrame.contentWindow.P && botFrame.contentWindow.P.pageContext.csrfToken) {
+  if (botFrame.contentWindow && botFrame.contentWindow.P && botFrame.contentWindow.P.pageContext && botFrame.contentWindow.P.pageContext.csrfToken) {
     window.csrfToken = botFrame.contentWindow.P.pageContext.csrfToken
   }
 }

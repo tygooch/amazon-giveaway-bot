@@ -8,11 +8,6 @@ export function claimWin(giveawayId) {
     return
   }
 
-  let retry = setTimeout(() => {
-    claimWin(giveawayId)
-  }, 1000)
-
-  console.log(botFrame.contentWindow.location.href)
   if (!GM_getValue('running')) {
     return
   } else if (botFrame.contentDocument.querySelector('.newAddress input')) {
@@ -40,10 +35,13 @@ export function claimWin(giveawayId) {
     (botFrame.contentDocument.body && botFrame.contentDocument.body.textContent.includes('you won!'))
   ) {
     log('Giveaway claimed!')
-    clearTimeout(retry)
     saveWin(giveawayId)
-    botFrame.contentWindow.location.href = 'https://www.amazon.com/ga/giveaways'
+    // botFrame.contentWindow.location.href = 'https://www.amazon.com/ga/giveaways'
   }
+
+  setTimeout(() => {
+    claimWin(giveawayId)
+  }, 2500)
 }
 
 export function saveWin(giveawayId, flags = { isOldWin: false, requiresTaxInfo: false }) {
@@ -79,8 +77,6 @@ export function saveWin(giveawayId, flags = { isOldWin: false, requiresTaxInfo: 
     .then(res => res.json())
     .then(data => {
       console.log(data)
-      let audio = new Audio('https://www.myinstants.com/media/sounds/cash-register-sound-fx_HgrEcyp.mp3')
-      audio.play()
       GM_notification({
         text: data.prize.name + ' (' + data.prize.priceValue + ')',
         title: 'Giveaway Won!',

@@ -142,8 +142,8 @@ export async function signIn() {
         el.click()
       }
     })
-    if (!accountAdded && botFrame.contentDocument.querySelector('cvf-account-switcher-add-accounts-link')) {
-      botFrame.contentDocument.querySelector('cvf-account-switcher-add-accounts-link').click()
+    if (!accountAdded && botFrame.contentDocument.querySelector('#cvf-account-switcher-add-accounts-link')) {
+      botFrame.contentDocument.querySelector('#cvf-account-switcher-add-accounts-link').click()
     }
   } else {
     setTimeout(() => {

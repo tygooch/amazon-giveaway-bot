@@ -255,6 +255,8 @@ export function enterGiveaway(giveawayId, payload = '{}', needUnfollow = false) 
         }
       } else {
         log('Giveaway won! Claiming prize...', 'success')
+        let audio = new Audio('https://www.myinstants.com/media/sounds/cash-register-sound-fx_HgrEcyp.mp3')
+        audio.play()
         botFrame.contentWindow.location = 'https://www.amazon.com/ga/won/' + giveawayId
       }
     })

@@ -27,7 +27,7 @@ ${STYLES}
       <div style="font-size: 17px; font-weight: 700; margin-bottom: 10px; border-bottom: 1px solid #eee;">
         Amazon Account
       </div>
-      <label for="accountDropdown">Account Email</label>
+      <label for="accountDropdown">Email/Mobile Number</label>
       <select id="accountDropdown" style="background-color: #fff;width: 100%;height: 31px; padding: 3px 7px; line-height: normal;">
         <option disabled>─────</option>
         <option id="addNewAccount" value="Add New Account" style="display:block;">Add New Account</option>
@@ -173,7 +173,7 @@ ${STYLES}
         </div>
         <form id="accountFormBody" style="display: flex; flex-direction: column; width: 100%; padding: 8px 16px; margin-bottom: 0px;">
           <div style="width: 100%; padding-bottom: 5px;">
-            <label for="amazonEmail">Email</label>
+            <label for="amazonEmail">Email/Mobile Number</label>
             <input id="amazonEmail" name="amazonEmail" type="text" placeholdertype="Amazon Email" class="required" autocomplete="nope" />
           </div>
           <div style="padding-bottom: 2px; width: 100%;">

@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name Amazon Giveaway Bot
-// @version 3.1.1
+// @version 3.1.2
 // @author Ty Gooch <gooch.ty@gmail.com>
 // @description Automates Amazon giveaway entries
 // @homepage https://github.com/TyGooch/amazon-giveaway-bot#readme
