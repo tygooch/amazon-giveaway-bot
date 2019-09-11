@@ -165,7 +165,7 @@ export function displayWinnings() {
 
   if (!allWinnings && GM_getValue('winHistory')) {
     convertWinHistory()
-  } else {
+  } else if (allWinnings) {
     JSON.parse(allWinnings)
       .sort((a, b) => new Date(a.endDateTime) - new Date(b.endDateTime))
       .forEach(winning => {
