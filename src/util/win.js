@@ -79,6 +79,8 @@ export function saveWin(giveawayId, flags = { isOldWin: false, requiresTaxInfo: 
     .then(res => res.json())
     .then(data => {
       console.log(data)
+      let audio = new Audio('https://www.myinstants.com/media/sounds/cash-register-sound-fx_HgrEcyp.mp3')
+      audio.play()
       GM_notification({
         text: data.prize.name + ' (' + data.prize.priceValue + ')',
         title: 'Giveaway Won!',
