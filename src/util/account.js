@@ -105,60 +105,51 @@ export function showNoSelection() {
 }
 
 export async function switchAccount() {
-  if (botFrame.contentDocument.querySelector('#nav-flyout-ya-signin a')) {
-    botFrame.contentDocument.querySelector('#nav-flyout-ya-signin a').click()
-  } else if (botFrame.contentDocument.querySelector('#nav-item-switch-account')) {
-    botFrame.contentDocument.querySelector('#nav-item-switch-account').click()
-  }
-  await signIn()
+  botFrame.contentWindow.location =
+    'https://www.amazon.com/gp/navigation/redirector.html/ref=sign-in-redirect?ie=UTF8&associationHandle=usflex&currentPageURL=https%3A%2F%2Fwww.amazon.com%2Fgp%2Fyourstore%2Fhome%3Fie%3DUTF8%26ref_%3Dnav_youraccount_switchacct&pageType=&switchAccount=picker&yshURL=https%3A%2F%2Fwww.amazon.com%2Fgp%2Fyourstore%2Fhome%3Fie%3DUTF8%26ref_%3Dnav_youraccount_switchacct'
 }
 
 export async function signIn() {
   let currentAccount = GM_getValue('currentAccount')
-  console.log(currentAccount)
-  let signInInterval = setInterval(() => {
-    if (!GM_getValue('running')) {
-      clearInterval(signInInterval)
-    } else if (botFrame.contentDocument.querySelector('#auth-captcha-image') || botFrame.contentDocument.querySelector('#captchacharacters')) {
-      clearInterval(signInInterval)
-      solveCaptcha()
-    } else if (botFrame.contentDocument.querySelector('body') && botFrame.contentDocument.querySelector('body').textContent.includes('Send OTP')) {
-      clearInterval(signInInterval)
-      log('SIGN IN FAILED - NEED OTP')
-      nextAccount()
-    } else if (botFrame.contentDocument.querySelector('#ap_email') && botFrame.contentDocument.querySelector('#continue input')) {
-      log('Signing in ' + currentAccount)
-      botFrame.contentDocument.querySelector('#ap_email').value = currentAccount
-      if (!botFrame.contentDocument.querySelector('#ap_password') && botFrame.contentDocument.querySelector('#continue input')) {
-        botFrame.contentDocument.querySelector('#continue input').click()
-      }
-    } else if (botFrame.contentDocument.querySelector('#ap_password')) {
-      if (
-        botFrame.contentDocument.querySelector('.a-size-base.a-color-tertiary.auth-text-truncate') &&
-        !botFrame.contentDocument.querySelector('.a-size-base.a-color-tertiary.auth-text-truncate').textContent.includes(currentAccount)
-      ) {
-        clearInterval(signInInterval)
-        log(currentAccount + ' signed out')
-        botFrame.contentDocument.querySelector('#ap_switch_account_link').click()
-      } else {
-        clearInterval(signInInterval)
-        botFrame.contentDocument.querySelector('#ap_password').value = JSON.parse(GM_getValue('accounts'))[currentAccount].password
-        botFrame.contentDocument.querySelector('#signInSubmit').click()
-      }
-    } else if (botFrame.contentDocument.querySelector('.cvf-account-switcher-spacing-base a')) {
-      clearInterval(signInInterval)
-      let accountAdded = false
-      botFrame.contentDocument.querySelectorAll('.a-section.cvf-account-switcher-spacing-base a').forEach(el => {
-        if (el.textContent.includes(currentAccount)) {
-          accountAdded = true
-          el.click()
-        } else if (el.textContent.includes('Add account') && !accountAdded) {
-          log('Adding account ' + currentAccount)
-          el.click()
-        }
-      })
+  console.log('Signing in: ' + currentAccount)
+  if (!GM_getValue('running')) {
+  } else if (botFrame.contentDocument.querySelector('#auth-captcha-image') || botFrame.contentDocument.querySelector('#captchacharacters')) {
+    solveCaptcha()
+  } else if (botFrame.contentDocument.querySelector('body') && botFrame.contentDocument.querySelector('body').textContent.includes('Send OTP')) {
+    log('SIGN IN FAILED - NEED OTP')
+    nextAccount()
+  } else if (botFrame.contentDocument.querySelector('#ap_email') && botFrame.contentDocument.querySelector('#continue input')) {
+    botFrame.contentDocument.querySelector('#ap_email').value = currentAccount
+    if (!botFrame.contentDocument.querySelector('#ap_password') && botFrame.contentDocument.querySelector('#continue input')) {
+      botFrame.contentDocument.querySelector('#continue input').click()
     }
-  }, 5000)
+  } else if (botFrame.contentDocument.querySelector('#ap_password')) {
+    if (
+      botFrame.contentDocument.querySelector('.a-size-base.a-color-tertiary.auth-text-truncate') &&
+      !botFrame.contentDocument.querySelector('.a-size-base.a-color-tertiary.auth-text-truncate').textContent.includes(currentAccount)
+    ) {
+      log(currentAccount + ' signed out')
+      botFrame.contentDocument.querySelector('#ap_switch_account_link').click()
+    } else {
+      botFrame.contentDocument.querySelector('#ap_password').value = JSON.parse(GM_getValue('accounts'))[currentAccount].password
+      botFrame.contentDocument.querySelector('#signInSubmit').click()
+    }
+  } else if (botFrame.contentDocument.querySelector('.cvf-account-switcher-spacing-base a')) {
+    let accountAdded = false
+    botFrame.contentDocument.querySelectorAll('.a-section.cvf-account-switcher-spacing-base .cvf-widget-btn-val').forEach(el => {
+      if (el.textContent.split('\n')[2].trim() === currentAccount) {
+        accountAdded = true
+        el.click()
+      }
+    })
+    if (!accountAdded && botFrame.contentDocument.querySelector('cvf-account-switcher-add-accounts-link')) {
+      botFrame.contentDocument.querySelector('cvf-account-switcher-add-accounts-link').click()
+    }
+  } else {
+    setTimeout(() => {
+      signIn()
+    }, 1000)
+  }
 }
 
 export function nextAccount() {
@@ -170,16 +161,22 @@ export function nextAccount() {
       nextIdx = 0
     }
     selectAccount(accounts[nextIdx])
-
-    botFrame.contentWindow.location =
-      'https://www.amazon.com/gp/navigation/redirector.html/ref=sign-in-redirect?ie=UTF8&associationHandle=usflex&currentPageURL=https%3A%2F%2Fwww.amazon.com%2Fgp%2Fyourstore%2Fhome%3Fie%3DUTF8%26ref_%3Dnav_youraccount_switchacct&pageType=&switchAccount=picker&yshURL=https%3A%2F%2Fwww.amazon.com%2Fgp%2Fyourstore%2Fhome%3Fie%3DUTF8%26ref_%3Dnav_youraccount_switchacct'
+    if (GM_getValue('startingAccount') === GM_getValue('currentAccount')) {
+      stopBot()
+    } else {
+      switchAccount()
+    }
   } else {
-    let audio = new Audio('https://www.myinstants.com/media/sounds/ding-sound-effect_2.mp3')
-    audio.play()
-    log('No more accounts to use. Add more in the settings tab or come back later for new giveaways.')
-    GM_notification('All available giveaways have been entered for this account. Switch accounts or come back later to enter more.', 'Giveaway Bot Stopped')
-    document.querySelector('#stop').click()
+    stopBot()
   }
+}
+
+function stopBot() {
+  let audio = new Audio('https://www.myinstants.com/media/sounds/ding-sound-effect_2.mp3')
+  audio.play()
+  log('No more accounts to use. Add more in the settings tab or come back later for new giveaways.')
+  GM_notification('All available giveaways have been entered for this account. Switch accounts or come back later to enter more.', 'Giveaway Bot Stopped')
+  document.querySelector('#stop').click()
 }
 
 export function initAccounts() {

@@ -28,6 +28,7 @@ export function saveAddress() {
 }
 
 export function fillAddressForm() {
+  console.log('Entering address')
   let address = JSON.parse(GM_getValue('accounts'))[document.querySelector('#accountDropdown').value].address
   botFrame.contentDocument.querySelector('#enterAddressFullName').value = address.fullName
   botFrame.contentDocument.querySelector('#enterAddressAddressLine1').value = address.street1

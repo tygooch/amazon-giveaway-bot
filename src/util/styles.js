@@ -145,6 +145,10 @@ export const STYLES = `
     color: #e31f64;
   }
 
+  .error {
+    color: #d8000c;
+  }
+
   .ellipse-1-line {
     display: block;
     display: -webkit-box;

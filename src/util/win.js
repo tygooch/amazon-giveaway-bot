@@ -4,54 +4,69 @@ import { fillAddressForm } from './address'
 
 export function claimWin(giveawayId) {
   if (GM_getValue('winHistory') && GM_getValue('winHistory').includes(giveawayId)) {
+    botFrame.contentWindow.location.href = 'https://www.amazon.com/ga/giveaways'
     return
   }
-  notifyWin(giveawayId)
 
-  let clickButton = setInterval(() => {
-    console.log(botFrame.contentWindow.location.href)
-    if (!GM_getValue('running')) {
-      return
-    } else if (botFrame.contentDocument.querySelector('.newAddress input')) {
-      log('click New Address')
-      botFrame.contentDocument.querySelector('.newAddress input').click()
-    } else if (botFrame.contentDocument.querySelector('.addAddressBox')) {
-      log('click add address')
-      botFrame.contentDocument.querySelector('.addAddressBox').click()
-    } else if (botFrame.contentDocument.querySelector('.enterAddressFormTable')) {
-      log('filling out address form')
-      fillAddressForm()
-    } else if (botFrame.contentDocument.querySelector('input[name="ShipMyPrize"]')) {
-      log('click ShipMyPrize')
-      botFrame.contentDocument.querySelector('input[name="ShipMyPrize"]').click()
-    } else if (botFrame.contentDocument.querySelector('#continue-button input')) {
-      log('click continue-button')
-      botFrame.contentDocument.querySelector('#continue-button input').click()
-    } else if (botFrame.contentDocument.querySelector('input[name="ClaimMyPrize"]')) {
-      log('click ClaimMyPrize')
-      botFrame.contentDocument.querySelector('input[name="ClaimMyPrize"]').click()
-    } else if (botFrame.contentDocument.querySelector('body').textContent.includes('You will receive a confirmation')) {
-      log('Giveaway claimed!')
-      clearInterval(clickButton)
-      recordWin(giveawayId)
-      addToHistory(giveawayId)
-      botFrame.contentWindow.location.href = 'https://www.amazon.com/ga/giveaways'
-    } else if (botFrame.contentDocument.querySelector('body').textContent.includes('we need your tax info')) {
-      clearInterval(clickButton)
-      log('Tax info required to claim', 'error')
-      botFrame.contentWindow.location.href = 'https://www.amazon.com/ga/giveaways'
-    }
-  }, 2000)
-  setTimeout(() => {
-    clearInterval(clickButton)
+  let retry = setTimeout(() => {
+    claimWin(giveawayId)
+  }, 1000)
+
+  console.log(botFrame.contentWindow.location.href)
+  if (!GM_getValue('running')) {
+    return
+  } else if (botFrame.contentDocument.querySelector('.newAddress input')) {
+    // log('click New Address')
+    botFrame.contentDocument.querySelector('.newAddress input').click()
+  } else if (botFrame.contentDocument.querySelector('.addAddressBox')) {
+    // log('click add address')
+    botFrame.contentDocument.querySelector('.addAddressBox').click()
+  } else if (botFrame.contentDocument.querySelector('.enterAddressFormTable')) {
+    // log('filling out address form')
+  } else if (botFrame.contentDocument.querySelector('input[name="ShipMyPrize"]')) {
+    // log('click ShipMyPrize')
+    botFrame.contentDocument.querySelector('input[name="ShipMyPrize"]').click()
+  } else if (botFrame.contentDocument.querySelector('#continue-button input')) {
+    // log('click continue-button')
+    botFrame.contentDocument.querySelector('#continue-button input').click()
+  } else if (botFrame.contentDocument.querySelector('input[name="ClaimMyPrize"]')) {
+    // log('click ClaimMyPrize')
+    botFrame.contentDocument.querySelector('input[name="ClaimMyPrize"]').click()
+  } else if (botFrame.contentDocument.querySelector('body') && botFrame.contentDocument.querySelector('body').textContent.includes('need your tax info')) {
+    log('Tax info required to claim prize.', 'error')
+    saveWin(giveawayId, { requiresTaxInfo: true })
+  } else if (
+    botFrame.contentDocument.querySelector('#redemption-success-message') ||
+    (botFrame.contentDocument.body && botFrame.contentDocument.body.textContent.includes('you won!'))
+  ) {
+    log('Giveaway claimed!')
+    clearTimeout(retry)
+    saveWin(giveawayId)
     botFrame.contentWindow.location.href = 'https://www.amazon.com/ga/giveaways'
-  }, 60000)
+  }
 }
 
-export function notifyWin(giveawayId) {
-  log('Giveaway won!', 'success')
-  let audio = new Audio('https://www.myinstants.com/media/sounds/cash-register-sound-fx_HgrEcyp.mp3')
-  audio.play()
+export function saveWin(giveawayId, flags = { isOldWin: false, requiresTaxInfo: false }) {
+  if (!giveawayId || giveawayId === '' || giveawayId.includes('?')) {
+    return
+  }
+  addToHistory(giveawayId)
+  let winHistory = GM_getValue('winHistory')
+  if (!winHistory) {
+    GM_setValue('winHistory', '|' + giveawayId)
+  } else {
+    if (winHistory.includes(giveawayId)) {
+      return
+    }
+    GM_setValue('winHistory', winHistory + '|' + giveawayId)
+  }
+
+  winHistory = GM_getValue('winHistory')
+  if (winHistory.length > 100000) {
+    winHistory = winHistory.substr(winHistory.length - 100000)
+  }
+  GM_setValue('winHistory', winHistory)
+
   fetch('https://www.amazon.com/gax/-/pex/api/v1/giveaway/' + giveawayId, {
     credentials: 'include',
     headers: {
@@ -76,62 +91,19 @@ export function notifyWin(giveawayId) {
           document.querySelector('#showBotFrame').click()
         },
       })
-    })
-    .catch(err => {
-      console.log(err)
-    })
-}
 
-export function recordWin(giveawayId) {
-  if (!giveawayId) return
-  let winHistory = GM_getValue('winHistory')
-  if (!winHistory) {
-    GM_setValue('winHistory', '|' + giveawayId)
-  } else {
-    if (winHistory.includes(giveawayId)) {
-      return
-    }
-    GM_setValue('winHistory', winHistory + '|' + giveawayId)
-  }
-
-  winHistory = GM_getValue('winHistory')
-  if (winHistory.length > 100000) {
-    winHistory = winHistory.substr(winHistory.length - 100000)
-  }
-  GM_setValue('winHistory', winHistory)
-
-  let wins = GM_getValue('totalWins')
-  GM_setValue('totalWins', wins + 1)
-  let currentSessionWins = GM_getValue('currentSessionWins')
-  GM_setValue('currentSessionWins', currentSessionWins + 1)
-  updateUI()
-
-  saveWin(giveawayId)
-}
-
-export function saveWin(giveawayId, isOldWin = false) {
-  if (!giveawayId || giveawayId === '' || giveawayId.includes('?')) {
-    return
-  }
-  fetch('https://www.amazon.com/gax/-/pex/api/v1/giveaway/' + giveawayId, {
-    credentials: 'include',
-    headers: {
-      'x-amzn-csrf': window.csrfToken,
-    },
-    body: null,
-    method: 'GET',
-    mode: 'cors',
-  })
-    .then(res => res.json())
-    .then(data => {
       let winning = {
         giveawayId: giveawayId,
         name: data.prize.name,
         imageUrl: data.prize.imageUrl,
         priceValue: data.prize.priceValue,
         type: data.prize.type,
-        endDateTime: isOldWin ? new Date(data.endDateTime).toLocaleString() : new Date().toLocaleString(),
-        account: isOldWin ? 'No Account Info' : GM_getValue('currentAccount'),
+        endDateTime: flags.isOldWin ? new Date(data.endDateTime).toLocaleString() : new Date().toLocaleString(),
+        account: flags.isOldWin ? 'No Account Info' : GM_getValue('currentAccount'),
+      }
+
+      if (flags.requiresTaxInfo) {
+        winning.requiresTaxInfo = true
       }
 
       let allWinnings = GM_getValue('allWinnings')
@@ -142,12 +114,11 @@ export function saveWin(giveawayId, isOldWin = false) {
       }
       allWinnings.push(winning)
       GM_setValue('allWinnings', JSON.stringify(allWinnings))
-      if (document.querySelector('#winningsListContainer').childElementCount === 0) {
-        displayWinnings()
-      } else {
-        getListItem(winning)
-      }
-      updateStats()
+
+      getListItem(winning)
+      GM_setValue('totalWins', allWinnings.length)
+      let currentSessionWins = GM_getValue('currentSessionWins')
+      GM_setValue('currentSessionWins', currentSessionWins + 1)
     })
 }
 
@@ -168,6 +139,11 @@ export function getListItem(winning) {
         </div>
         <div class="a-section a-spacing-none a-text-center"><span class="a-size-medium">${winning.endDateTime}</span></div>
         <div class="a-section a-spacing-none a-text-center"><span class="a-size-medium">${winning.account}</span></div>
+          ${
+            winning.requiresTaxInfo
+              ? '<div class="a-section a-spacing-none a-text-center" style="margin-top:10px;"><span class="error a-size-medium a-text-bold">Tax Info Required!</span></div>'
+              : ''
+          }
         </a>
       </div>
     </li>
@@ -179,38 +155,16 @@ export function getListItem(winning) {
   }
 
   document.querySelector('#winningsListContainer').prepend(listItem.firstElementChild)
+  updateStats()
 }
 
 export function displayWinnings() {
   let allWinnings = GM_getValue('allWinnings')
-  if (document.querySelector('#winningsListContainer').childElementCount !== 0) {
-    return
-  }
 
   document.querySelector('#winningsHeaderCount').innerText = GM_getValue('totalWins') + ' Giveaways Won'
 
-  if (!allWinnings) {
-    let winHistory = GM_getValue('winHistory')
-    if (!winHistory) {
-      return
-    }
-    winHistory = winHistory
-      .split('|')
-      .filter(el => el !== 'undefined' && el !== '' && !el.includes('?'))
-      .filter((el, idx, self) => self.indexOf(el) === idx)
-      .join('|')
-    GM_setValue('winHistory', winHistory)
-    GM_setValue('totalWins', winHistory.length)
-
-    winHistory = winHistory.split('|').reverse()
-    let convertWinHistory = setInterval(() => {
-      console.log(winHistory)
-      if (winHistory.length > 0) {
-        saveWin(winHistory.pop(), true)
-      } else {
-        clearInterval(convertWinHistory)
-      }
-    }, 500)
+  if (!allWinnings && GM_getValue('winHistory')) {
+    convertWinHistory()
   } else {
     JSON.parse(allWinnings)
       .sort((a, b) => new Date(a.endDateTime) - new Date(b.endDateTime))
@@ -222,22 +176,49 @@ export function displayWinnings() {
 }
 
 export function updateStats() {
+  updateUI()
   document.querySelector('#winningsHeaderCount').innerText = GM_getValue('totalWins') + ' Giveaways Won'
   let totalValue = 0
-  JSON.parse(GM_getValue('allWinnings')).forEach(winning => {
-    totalValue += parseFloat(winning.priceValue.slice(1))
-    document.querySelector('#winningsHeaderValue').innerText = '$' + Math.round(totalValue * 100) / 100 + ' Total Value'
-  })
+  if (GM_getValue('allWinnings')) {
+    JSON.parse(GM_getValue('allWinnings')).forEach(winning => {
+      totalValue += parseFloat(winning.priceValue.slice(1))
+      document.querySelector('#winningsHeaderValue').innerText = '$' + Math.round(totalValue * 100) / 100 + ' Total Value'
+    })
+  }
+}
+
+export function convertWinHistory() {
+  let winHistory = GM_getValue('winHistory')
+  if (!winHistory) return
+
+  winHistory = winHistory
+    .split('|')
+    .filter(el => el !== 'undefined' && el !== '' && !el.includes('?'))
+    .filter((el, idx, self) => self.indexOf(el) === idx)
+    .join('|')
+  GM_setValue('winHistory', winHistory)
+
+  winHistory = winHistory.split('|').reverse()
+  let convertWinHistory = setInterval(() => {
+    console.log(winHistory)
+    if (winHistory.length > 0) {
+      saveWin(winHistory.pop(), { isOldWin: true })
+    } else {
+      clearInterval(convertWinHistory)
+    }
+  }, 500)
 }
 
 export function initWinnings() {
   if (!GM_getValue('totalWins')) {
     GM_setValue('totalWins', 0)
   }
+  if (GM_getValue('allWinnings')) {
+    let allWinnings = JSON.parse(GM_getValue('allWinnings'))
+    GM_setValue('totalWins', allWinnings.length)
+  }
 
-  document.querySelector('#totalWinsValue').innerHTML = GM_getValue('totalWins', 0)
+  document.querySelector('#totalWinsValue').innerHTML = GM_getValue('totalWins')
 
-  document.querySelector('#showWinnings').addEventListener('click', () => {
-    displayWinnings()
-  })
+  displayWinnings()
 }

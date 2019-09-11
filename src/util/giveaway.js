@@ -6,6 +6,7 @@ let giveaways = []
 let offset = 0
 let historyKey
 let csrfToken
+let fetchFails = 0
 
 export function initGiveaways() {
   if (!GM_getValue('lifetimeEntries')) {
@@ -30,6 +31,7 @@ export function getGiveaways() {
   })
     .then(res => res.json())
     .then(data => {
+      fetchFails = 0
       if (!GM_getValue('running')) {
         return
       }
@@ -72,14 +74,24 @@ export function getGiveaways() {
         }
       }
     })
+    .catch(err => {
+      console.log(err)
+      if (err.toString().includes('Failed to fetch')) {
+        fetchFails += 1
+        if (fetchFails > 1) {
+          log('Reattempt failed. Check your connection.', 'error')
+          document.querySelector('#stop').click()
+          return
+        }
+        log('Network error. Retrying...', 'error')
+        getGiveaways()
+      }
+    })
 }
 
 export function nextGiveaway() {
   if (!GM_getValue('running')) {
     return
-  } else if (botFrame.contentWindow.location.href.includes('/ga/p')) {
-    console.log(botFrame.contentWindow.location.href)
-    fetchGiveaway(giveaways[giveaways.length - 1])
   } else if (giveaways && giveaways.length > 0) {
     let next = giveaways.pop()
     fetchGiveaway(next)
@@ -94,13 +106,13 @@ export function fetchGiveaway(url) {
     return
   }
   log('Loading ', 'link', url)
-  if (!botFrame.contentWindow.P.pageContext) {
+  if (!window.csrfToken) {
+    console.log('no csrf')
     botFrame.contentWindow.location = 'https://www.amazon.com/ga/giveaways'
     return
   }
-  csrfToken = botFrame.contentWindow.P.pageContext.csrfToken
+  csrfToken = window.csrfToken
   let giveawayId = url.split('/p/')[1].split('?')[0]
-
   fetch(`https://www.amazon.com/gax/-/pex/api/v1/giveaway/${giveawayId}/participation`, {
     credentials: 'include',
     headers: {
@@ -117,23 +129,27 @@ export function fetchGiveaway(url) {
   })
     .then(res => res.json())
     .then(data => {
-      console.log(data)
+      fetchFails = 0
+      console.log(JSON.stringify(data, null, 2))
       if (data.loginUrl) {
         log('Sign in needed')
-
         botFrame.contentWindow.location = data.loginUrl
         signIn()
         return
       } else if (data.issue) {
-        console.log(data)
-        console.log(data.issue)
-        log('Giveaway closed', 'error')
+        if (data.issue.name === 'digitalEntryIneligible') {
+          log('You are not allowed to participate in this giveaway.', 'error')
+        } else {
+          log('Giveaway closed.', 'error')
+        }
+        addToHistory(giveawayId)
         nextGiveaway()
         return
       } else if (data.success && data.success.status !== 'notParticipated') {
-        console.log(data.success.status)
+        let result = data.success.status
+        console.log(result)
         addToHistory(giveawayId)
-        log('Already participated (' + data.success.status + ')')
+        log('Already participated (' + result + ')')
         nextGiveaway()
         return
       } else if (data.success.nextUserAction) {
@@ -154,19 +170,44 @@ export function fetchGiveaway(url) {
         })
           .then(res => res.json())
           .then(data => {
+            console.log(JSON.stringify(data, null, 2))
+            fetchFails = 0
             enterGiveaway(giveawayId, `{"encryptedState":"${data.success.encryptedState}"}`, needUnfollow)
           })
           .catch(err => {
-            log(err, 'error')
+            console.log('ERROR IN NEXT ACTION')
+            console.log(err)
+            if (err.toString().includes('Failed to fetch')) {
+              fetchFails += 1
+              if (fetchFails > 1) {
+                log('Reattempt failed. Check your connection.', 'error')
+                document.querySelector('#stop').click()
+                return
+              }
+              log('Network error. Retrying...', 'error')
+              fetchGiveaway(url)
+            } else {
+              log('Entry not allowed', 'error')
+            }
           })
       } else {
         enterGiveaway(giveawayId)
       }
     })
     .catch(err => {
-      console.log('here')
-      log(err, 'error')
-      fetchGiveaway(url)
+      console.log(err)
+      if (err.toString().includes('Failed to fetch')) {
+        fetchFails += 1
+        if (fetchFails > 1) {
+          log('Reattempt failed. Check your connection.', 'error')
+          document.querySelector('#stop').click()
+          return
+        }
+        log('Network error. Retrying...', 'error')
+        fetchGiveaway(url)
+      } else {
+        nextGiveaway()
+      }
     })
 }
 
@@ -191,16 +232,21 @@ export function enterGiveaway(giveawayId, payload = '{}', needUnfollow = false) 
   })
     .then(res => res.json())
     .then(data => {
-      console.log(data.success.status)
+      console.log('SUBMITTED')
+      fetchFails = 0
+      console.log(JSON.stringify(data, null, 2))
+      if (!data.success && !data.success.status) return
+      let result = data.success.status
+      console.log(result)
       let logItems = Array.from(document.querySelector('#logContent').childNodes).filter(el => el.textContent.includes('Status: '))
-      logItems[logItems.length - 1].lastElementChild.textContent = 'Status: ' + data.success.status
+      logItems[logItems.length - 1].lastElementChild.textContent = 'Status: ' + result
       let newHistory = GM_getValue('logHistory').split('|')
-      newHistory[newHistory.length - 1] = newHistory[newHistory.length - 1].replace('submitting entry', data.success.status)
+      newHistory[newHistory.length - 1] = newHistory[newHistory.length - 1].replace('submitting entry', result)
       GM_setValue('logHistory', newHistory.join('|'))
 
       updateEntryCount()
 
-      if (data.success.status !== 'lucky' && data.success.status !== 'won') {
+      if (result !== 'lucky' && result !== 'won') {
         addToHistory(giveawayId)
         if (needUnfollow) {
           unfollowAuthors()
@@ -208,13 +254,28 @@ export function enterGiveaway(giveawayId, payload = '{}', needUnfollow = false) 
           nextGiveaway()
         }
       } else {
+        log('Giveaway won! Claiming prize...', 'success')
+        let audio = new Audio('https://www.myinstants.com/media/sounds/cash-register-sound-fx_HgrEcyp.mp3')
+        audio.play()
         botFrame.contentWindow.location = 'https://www.amazon.com/ga/won/' + giveawayId
       }
     })
     .catch(err => {
       console.log('ERROR')
-      log(err, 'error')
-      nextGiveaway()
+      console.log(err)
+      if (err.toString().includes('Failed to fetch')) {
+        fetchFails += 1
+        if (fetchFails > 1) {
+          log('Reattempt failed. Check your connection.', 'error')
+          document.querySelector('#stop').click()
+          return
+        }
+        log('Network error. Retrying...', 'error')
+        enterGiveaway(giveawayId, payload, needUnfollow)
+      } else {
+        log('Entry not allowed', 'error')
+        nextGiveaway()
+      }
     })
 }
 
@@ -222,8 +283,8 @@ export function addToHistory(giveawayId) {
   let historyKey = GM_getValue('currentAccount') + 'history'
   let visited = GM_getValue(historyKey, '')
   visited += '|' + giveawayId
-  if (visited.length > 100000) {
-    visited = visited.slice(visited.length - 100000)
+  if (visited.length > 1000000) {
+    visited = visited.slice(visited.length - 1000000)
   }
   GM_setValue(historyKey, visited)
 }

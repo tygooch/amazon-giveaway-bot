@@ -7,7 +7,7 @@ export function unfollowAuthors() {
     return
   }
   GM_setValue('lastUnfollowTime', Date.now())
-  log('Unfollowing author...')
+  log('Unfollowing authors...')
   botFrame.contentWindow.location.href = 'https://www.amazon.com/preferences/subscriptions/your-subscriptions/current-subscriptions'
 
   let unfollowAll = setInterval(() => {

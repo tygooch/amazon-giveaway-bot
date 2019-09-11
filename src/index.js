@@ -1,12 +1,11 @@
 import { UI_TEMPLATE } from './util/uiTemplate'
 import { initAccounts, signIn, switchAccount } from './util/account'
-import { initAddress } from './util/address'
+import { initAddress, fillAddressForm } from './util/address'
 import { initGiveaways, nextGiveaway } from './util/giveaway'
 import { log, initLog } from './util/logger'
 import { claimWin, initWinnings } from './util/win'
 
 let botFrame
-let timer
 
 async function main() {
   if (!GM_getValue('running')) {
@@ -17,17 +16,25 @@ async function main() {
   let isSignIn = location.includes('/ap/signin') || botFrame.contentDocument.querySelector('.cvf-account-switcher') || location.includes('/ap/cvf')
 
   if (isSignIn) {
-    signIn()
+    await signIn()
   } else if (location.includes('/home')) {
     log(GM_getValue('currentAccount') + ' signed in')
     botFrame.contentWindow.location.href = 'https://www.amazon.com/ga/giveaways'
+    // botFrame.contentWindow.location.reload()
   } else if (location.includes('/ga/giveaways')) {
-    window.csrfToken = botFrame.contentWindow.P.pageContext.csrfToken
+    if (botFrame.contentWindow.P && botFrame.contentWindow.P.pageContext) {
+      window.csrfToken = botFrame.contentWindow.P.pageContext.csrfToken
+    }
     nextGiveaway()
   } else if (location.includes('/ga/p') && !window.csrfToken) {
     botFrame.contentWindow.location.href = 'https://www.amazon.com/ga/giveaways'
   } else if (location.includes('/ga/won')) {
     claimWin(location.split('/won/')[1].split('#')[0])
+  } else if (location.includes('/addaddress')) {
+    fillAddressForm()
+  } else if (location.includes('/ga/p/tax')) {
+    console.log('tax')
+    botFrame.contentWindow.location.href = decodeURIComponent(botFrame.contentWindow.location.href.split('redirectSuccessUrl=')[1])
   }
 }
 
@@ -96,6 +103,7 @@ async function startBot() {
     return
   }
   await switchAccount()
+  GM_setValue('startingAccount', GM_getValue('currentAccount'))
 
   GM_setValue('running', true)
   GM_setValue('currentSessionEntries', 0)
@@ -108,6 +116,9 @@ async function startBot() {
   window.autoscroll = true
   document.querySelector('#showLog').click()
   log('Bot Started')
+  if (botFrame.contentWindow.P && botFrame.contentWindow.P.pageContext.csrfToken) {
+    window.csrfToken = botFrame.contentWindow.P.pageContext.csrfToken
+  }
 }
 
 async function stopBot() {
@@ -116,7 +127,6 @@ async function stopBot() {
     log('Bot stopped')
   }, 1000)
 
-  clearInterval(timer)
   botFrame.removeEventListener('load', main)
   document.querySelector('#currentSessionEntries').textContent = ''
   document.querySelector('#currentSessionWins').textContent = ''
@@ -133,11 +143,8 @@ window.addEventListener(
   async () => {
     window.stop()
     await setup()
-    document.querySelectorAll('script').forEach(el => {
-      el.remove()
-    })
   },
-  { capture: false, once: true }
+  { capture: true, once: true }
 )
 
 window.addEventListener(
