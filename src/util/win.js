@@ -3,41 +3,46 @@ import { updateUI, addToHistory } from './giveaway'
 import { fillAddressForm } from './address'
 
 export function claimWin(giveawayId) {
+  if (GM_getValue('winHistory') && GM_getValue('winHistory').includes(giveawayId)) {
+    botFrame.contentWindow.location.href = 'https://www.amazon.com/ga/giveaways'
+    return
+  }
+
+  let retry = setTimeout(() => {
+    claimWin(giveawayId)
+  }, 1000)
+
   if (!GM_getValue('running')) {
     return
-  } else if (GM_getValue('winHistory') && GM_getValue('winHistory').includes(giveawayId)) {
+  } else if (botFrame.contentDocument.querySelector('.newAddress input')) {
+    // log('click New Address')
+    botFrame.contentDocument.querySelector('.newAddress input').click()
+  } else if (botFrame.contentDocument.querySelector('.addAddressBox')) {
+    // log('click add address')
+    botFrame.contentDocument.querySelector('.addAddressBox').click()
+  } else if (botFrame.contentDocument.querySelector('.enterAddressFormTable')) {
+    // log('filling out address form')
+  } else if (botFrame.contentDocument.querySelector('input[name="ShipMyPrize"]')) {
+    // log('click ShipMyPrize')
+    botFrame.contentDocument.querySelector('input[name="ShipMyPrize"]').click()
+  } else if (botFrame.contentDocument.querySelector('#continue-button input')) {
+    // log('click continue-button')
+    botFrame.contentDocument.querySelector('#continue-button input').click()
+  } else if (botFrame.contentDocument.querySelector('input[name="ClaimMyPrize"]')) {
+    // log('click ClaimMyPrize')
+    botFrame.contentDocument.querySelector('input[name="ClaimMyPrize"]').click()
+  } else if (botFrame.contentDocument.querySelector('body') && botFrame.contentDocument.querySelector('body').textContent.includes('need your tax info')) {
+    clearTimeout('retry')
+    log('Tax info required to claim prize.', 'error')
+    saveWin(giveawayId, { requiresTaxInfo: true })
+  } else if (
+    botFrame.contentDocument.querySelector('#redemption-success-message') ||
+    (botFrame.contentDocument.body && botFrame.contentDocument.body.textContent.includes('you won!'))
+  ) {
+    clearTimeout(retry)
+    log('Giveaway claimed!')
+    saveWin(giveawayId)
     botFrame.contentWindow.location.href = 'https://www.amazon.com/ga/giveaways'
-  } else {
-    if (botFrame.contentDocument.querySelector('.newAddress input')) {
-      // log('click New Address')
-      botFrame.contentDocument.querySelector('.newAddress input').click()
-    } else if (botFrame.contentDocument.querySelector('.addAddressBox')) {
-      // log('click add address')
-      botFrame.contentDocument.querySelector('.addAddressBox').click()
-    } else if (botFrame.contentDocument.querySelector('.enterAddressFormTable')) {
-      // log('filling out address form')
-    } else if (botFrame.contentDocument.querySelector('input[name="ShipMyPrize"]')) {
-      // log('click ShipMyPrize')
-      botFrame.contentDocument.querySelector('input[name="ShipMyPrize"]').click()
-    } else if (botFrame.contentDocument.querySelector('#continue-button input')) {
-      // log('click continue-button')
-      botFrame.contentDocument.querySelector('#continue-button input').click()
-    } else if (botFrame.contentDocument.querySelector('input[name="ClaimMyPrize"]')) {
-      // log('click ClaimMyPrize')
-      botFrame.contentDocument.querySelector('input[name="ClaimMyPrize"]').click()
-    } else if (botFrame.contentDocument.querySelector('body') && botFrame.contentDocument.querySelector('body').textContent.includes('need your tax info')) {
-      log('Tax info required to claim prize.', 'error')
-      saveWin(giveawayId, { requiresTaxInfo: true })
-    } else if (
-      botFrame.contentDocument.querySelector('#redemption-success-message') ||
-      (botFrame.contentDocument.body && botFrame.contentDocument.body.textContent.includes('you won!'))
-    ) {
-      log('Giveaway claimed!')
-      saveWin(giveawayId)
-    }
-    setTimeout(() => {
-      claimWin(giveawayId)
-    }, 2500)
   }
 }
 
